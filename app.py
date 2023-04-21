@@ -2,6 +2,8 @@ import base64
 import datetime
 import io
 
+import plotly.express as px
+
 import dash
 from dash.dependencies import Input, Output, State
 from dash import dcc, html, dash_table
@@ -13,6 +15,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([
+     html.H1("Junior-viz"),
     dcc.Upload(
         id='upload-data',
         children=html.Div([
@@ -20,7 +23,7 @@ app.layout = html.Div([
             html.A('Select Files')
         ]),
         style={
-            'width': '100%',
+            'width': '20%',
             'height': '60px',
             'lineHeight': '60px',
             'borderWidth': '1px',
@@ -33,6 +36,7 @@ app.layout = html.Div([
         multiple=True
     ),
     html.Div(id='output-data-upload'),
+    # dcc.Graph(figure=px.histogram(df, x='Название', y='5', histfunc='avg'))
 ])
 
 def parse_contents(contents, filename, date):
