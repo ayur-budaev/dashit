@@ -12,10 +12,11 @@ import pandas as pd
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
+                suppress_callback_exceptions=True)
 
 app.layout = html.Div([
-     html.H1("Junior-viz"),
+    html.H1("Junior-viz"),
     dcc.Upload(
         id='upload-data',
         children=html.Div([
@@ -23,7 +24,7 @@ app.layout = html.Div([
             html.A('Select Files')
         ]),
         style={
-            'width': '20%',
+            'width': '50%',
             'height': '60px',
             'lineHeight': '60px',
             'borderWidth': '1px',
@@ -35,9 +36,10 @@ app.layout = html.Div([
         # Allow multiple files to be uploaded
         multiple=True
     ),
-    html.Div(id='output-data-upload'),
-    # dcc.Graph(figure=px.histogram(df, x='Название', y='5', histfunc='avg'))
+    html.Div(id='output-div'),
+    html.Div(id='output-datatable'),
 ])
+
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -59,12 +61,22 @@ def parse_contents(contents, filename, date):
 
     return html.Div([
         html.H5(filename),
-        html.H6(datetime.datetime.fromtimestamp(date)),
+        # html.H6(datetime.datetime.fromtimestamp(date)),
+        html.P("Выберите ось X"),
+        dcc.Dropdown(id='xaxis-data',
+                     options=[{'label':x, 'value':x} for x in df.columns]),
+        html.P("Выберите ось Y"),
+        dcc.Dropdown(id='yaxis-data',
+                     options=[{'label':x, 'value':x} for x in df.columns]),
+        html.Button(id="submit-button", children="Создать график"),
+        html.Hr(),
 
         dash_table.DataTable(
-            df.to_dict('records'),
-            [{'name': i, 'id': i} for i in df.columns]
+            data=df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns],
+            page_size=15
         ),
+        dcc.Store(id='stored-data', data=df.to_dict('records')),
 
         html.Hr(),  # horizontal line
 
@@ -76,7 +88,8 @@ def parse_contents(contents, filename, date):
         })
     ])
 
-@app.callback(Output('output-data-upload', 'children'),
+
+@app.callback(Output('output-datatable', 'children'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
@@ -87,5 +100,21 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
 
+
+@app.callback(Output('output-div', 'children'),
+              Input('submit-button','n_clicks'),
+              State('stored-data','data'),
+              State('xaxis-data','value'),
+              State('yaxis-data', 'value'))
+def make_graphs(n, data, x_data, y_data):
+    if n is None:
+        return dash.no_update
+    else:
+        bar_fig = px.bar(data, x=x_data, y=y_data)
+        # print(data)
+        return dcc.Graph(figure=bar_fig)
+
+
+# running the server
 if __name__ == '__main__':
     app.run_server(debug=True)
