@@ -9,6 +9,7 @@ from dash.dependencies import Input, Output, State
 from dash import dcc, html, dash_table
 
 import pandas as pd
+import dash_draggable
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -36,8 +37,11 @@ app.layout = html.Div([
         # Allow multiple files to be uploaded
         multiple=True
     ),
-    html.Div(id='output-div'),
     html.Div(id='output-datatable'),
+    # dash_draggable.ResponsiveGridLayout([
+    html.Div(id='output-div'),
+    
+    # ])
 ])
 
 
@@ -74,18 +78,30 @@ def parse_contents(contents, filename, date):
         dash_table.DataTable(
             data=df.to_dict('records'),
             columns=[{'name': i, 'id': i} for i in df.columns],
+            editable=True,
+        filter_action="native",
+        sort_action="native",
+        sort_mode="multi",
+        column_selectable="single",
+        row_selectable="multi",
+        row_deletable=True,
+        selected_columns=[],
+        selected_rows=[],
+        page_action="native",
+        page_current= 0,
             page_size=15
         ),
+
         dcc.Store(id='stored-data', data=df.to_dict('records')),
 
         html.Hr(),  # horizontal line
 
         # For debugging, display the raw contents provided by the web browser
-        html.Div('Raw Content'),
-        html.Pre(contents[0:200] + '...', style={
-            'whiteSpace': 'pre-wrap',
-            'wordBreak': 'break-all'
-        })
+        # html.Div('Raw Content'),
+        # html.Pre(contents[0:200] + '...', style={
+        #     'whiteSpace': 'pre-wrap',
+        #     'wordBreak': 'break-all'
+        # })
     ])
 
 
@@ -112,7 +128,7 @@ def make_graphs(n, data, x_data, y_data):
     else:
         bar_fig = px.bar(data, x=x_data, y=y_data)
         # print(data)
-        return dcc.Graph(figure=bar_fig)
+        return dash_draggable.ResponsiveGridLayout([dcc.Graph(figure=bar_fig)])
 
 
 # running the server
