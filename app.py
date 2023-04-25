@@ -1,7 +1,7 @@
 import base64
-import datetime
+# import datetime
 import io
-
+import json
 import plotly.express as px
 
 import dash
@@ -13,7 +13,8 @@ import dash_draggable
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
+app = dash.Dash(__name__, 
+                external_stylesheets=external_stylesheets,
                 suppress_callback_exceptions=True)
 
 app.layout = html.Div([
@@ -35,64 +36,80 @@ app.layout = html.Div([
             'margin': '10px'
         },
         # Allow multiple files to be uploaded
-        multiple=True
+        multiple=False
     ),
+    dcc.Store(id='data-file', storage_type='local' ),
     html.Div(id='output-datatable'),
+    html.Div(id='output-axis'),
     # dash_draggable.ResponsiveGridLayout([
     html.Div(id='output-div'),
     
     # ])
 ])
 
+def parse_contents(contents, filename):
+    df_uploaded = pd.DataFrame()
+    
+    if contents:
+        try:
+            content_type, content_string = contents.split(',')
+            decoded = base64.b64decode(content_string)
 
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
+            if 'csv' in filename:
+                # Assume that the user uploaded a CSV file
+                df_uploaded = pd.read_csv(
+                    io.StringIO(decoded.decode('utf-8')))
+            elif 'xls' in filename:
+                # Assume that the user uploaded an excel file
+                df_uploaded = pd.read_excel(io.BytesIO(decoded))
+        except Exception as e:
+            print('parse_contents: ', e)
+            
+    return df_uploaded
 
-    decoded = base64.b64decode(content_string)
+@app.callback(Output('data-file', 'data'),
+              Input('upload-data', 'contents'),
+              Input('upload-data', 'filename'), prevent_initial_call=True)
+#               State('upload-data', 'last_modified'))
+def set_data(contents, filename):
+    json_data = {'filename':filename}
+    df = parse_contents(contents, filename)
     try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-        elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
+        dataset = df.to_json(orient='split', date_format='iso')
+        
+        json_data['data'] = dataset 
+        # print(dataset)
+        return json.dumps(json_data)
     except Exception as e:
         print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
+        return json.dumps(json_data)
+    
+@app.callback(Output('output-datatable', 'children'),
+              Input('data-file', 'data'), prevent_initial_call=True)
+def get_table(data):
+    dataset = json.loads(data)
+    df = pd.read_json(dataset['data'], orient='split')
 
-    return html.Div([
-        html.H5(filename),
-        # html.H6(datetime.datetime.fromtimestamp(date)),
-        html.P("Выберите ось X"),
-        dcc.Dropdown(id='xaxis-data',
-                     options=[{'label':x, 'value':x} for x in df.columns]),
-        html.P("Выберите ось Y"),
-        dcc.Dropdown(id='yaxis-data',
-                     options=[{'label':x, 'value':x} for x in df.columns]),
-        html.Button(id="submit-button", children="Создать график"),
-        html.Hr(),
-
+    return [html.H5(dataset['filename']),
+                # html.H6(datetime.datetime.fromtimestamp(date)),
         dash_table.DataTable(
             data=df.to_dict('records'),
             columns=[{'name': i, 'id': i} for i in df.columns],
             editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        page_current= 0,
+            filter_action="native",
+            sort_action="native",
+            sort_mode="multi", 
+            column_selectable="single",
+            row_selectable="multi",
+            row_deletable=True,
+            selected_columns=[],
+            selected_rows=[],
+            page_action="native",
+            page_current= 0,
             page_size=15
         ),
 
-        dcc.Store(id='stored-data', data=df.to_dict('records')),
+        # dcc.Store(id='stored-data', data=df.to_dict('records')),
 
         html.Hr(),  # horizontal line
 
@@ -102,35 +119,38 @@ def parse_contents(contents, filename, date):
         #     'whiteSpace': 'pre-wrap',
         #     'wordBreak': 'break-all'
         # })
-    ])
+    ]
 
-
-@app.callback(Output('output-datatable', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
-
+@app.callback(Output('output-axis', 'children'),
+              Input('data-file', 'data'), prevent_initial_call=True)
+def draw_axis(data):
+    dataset = json.loads(data)['data']
+    df = pd.read_json(dataset, orient='split')
+    # print(df.columns)
+    return [html.P("Выберите ось X"),
+        dcc.Dropdown(id='xaxis-data',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.P("Выберите ось Y"),
+        dcc.Dropdown(id='yaxis-data',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.Button(id="submit-button", children="Создать график"),
+        html.Hr()]
 
 @app.callback(Output('output-div', 'children'),
-              Input('submit-button','n_clicks'),
-              State('stored-data','data'),
-              State('xaxis-data','value'),
-              State('yaxis-data', 'value'))
-def make_graphs(n, data, x_data, y_data):
-    if n is None:
-        return dash.no_update
-    else:
-        bar_fig = px.bar(data, x=x_data, y=y_data)
+              Input('data-file','data'),
+            #   Input('submit-button','n_clicks'),
+              Input('xaxis-data','value'),
+              Input('yaxis-data', 'value'), prevent_initial_call=False)
+
+def make_graphs(data, x_data, y_data):
+
+        # print(data)
+        dataset = json.loads(data)['data']
+        df = pd.read_json(dataset, orient='split')
+        bar_fig = px.bar(df, x=x_data, y=y_data)
         # print(data)
         return dash_draggable.ResponsiveGridLayout([dcc.Graph(figure=bar_fig)])
-
-
+    
 # running the server
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, use_reloader=True)
