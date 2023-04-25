@@ -13,20 +13,28 @@ import dash_draggable
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
+DROPDOWN_STYLE = {
+    'width': '25%'
+}
+
+NAME_STYLE = {
+    'align': 'center'
+}
+
 app = dash.Dash(__name__, 
                 external_stylesheets=external_stylesheets,
                 suppress_callback_exceptions=True)
 
 app.layout = html.Div([
-    html.H1("Junior-viz"),
+    html.H1("Junior-viz", style={'textAlign': 'center'}),
     dcc.Upload(
         id='upload-data',
         children=html.Div([
-            'Drag and Drop or ',
-            html.A('Select Files')
+            'Перетащите или ',
+            html.A('выберите файл')
         ]),
         style={
-            'width': '50%',
+            'width': '99%',
             'height': '60px',
             'lineHeight': '60px',
             'borderWidth': '1px',
@@ -41,10 +49,9 @@ app.layout = html.Div([
     dcc.Store(id='data-file', storage_type='local' ),
     html.Div(id='output-datatable'),
     html.Div(id='output-axis'),
-    # dash_draggable.ResponsiveGridLayout([
-    html.Div(id='output-div'),
-    
-    # ])
+    dash_draggable.ResponsiveGridLayout([
+        html.Div(id='barchart-div'),
+    ])
 ])
 
 def parse_contents(contents, filename):
@@ -66,6 +73,7 @@ def parse_contents(contents, filename):
             print('parse_contents: ', e)
             
     return df_uploaded
+
 
 @app.callback(Output('data-file', 'data'),
               Input('upload-data', 'contents'),
@@ -91,7 +99,7 @@ def get_table(data):
     df = pd.read_json(dataset['data'], orient='split')
 
     return [html.H5(dataset['filename']),
-                # html.H6(datetime.datetime.fromtimestamp(date)),
+        # html.H6(datetime.datetime.fromtimestamp(date)),
         dash_table.DataTable(
             data=df.to_dict('records'),
             columns=[{'name': i, 'id': i} for i in df.columns],
@@ -106,7 +114,7 @@ def get_table(data):
             selected_rows=[],
             page_action="native",
             page_current= 0,
-            page_size=15
+            page_size=10
         ),
 
         # dcc.Store(id='stored-data', data=df.to_dict('records')),
@@ -123,33 +131,47 @@ def get_table(data):
 
 @app.callback(Output('output-axis', 'children'),
               Input('data-file', 'data'), prevent_initial_call=True)
+
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     # print(df.columns)
-    return [html.P("Выберите ось X"),
+    return [html.Div(
+            [html.P("Выберите ось X"),
         dcc.Dropdown(id='xaxis-data',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
         dcc.Dropdown(id='yaxis-data',
-                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-        html.Button(id="submit-button", children="Создать график"),
-        html.Hr()]
-
-@app.callback(Output('output-div', 'children'),
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        # html.Button(id="submit-button", children="Создать график"),
+        html.P("Введите название графика"),
+        dcc.Input(id="barchart-name", type="text", placeholder="Название", persistence='local'),
+        html.Hr()],
+        style=DROPDOWN_STYLE    
+        )]
+        
+@app.callback(Output('barchart-div', 'children'),
               Input('data-file','data'),
-            #   Input('submit-button','n_clicks'),
+            # Input('submit-button','n_clicks'),
               Input('xaxis-data','value'),
-              Input('yaxis-data', 'value'), prevent_initial_call=False)
+              Input('yaxis-data', 'value'),
+              Input('barchart-name','value'),
+              prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data):
-
+def make_graphs(data, x_data, y_data, barchart_name):
         # print(data)
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
         bar_fig = px.bar(df, x=x_data, y=y_data)
         # print(data)
-        return dash_draggable.ResponsiveGridLayout([dcc.Graph(figure=bar_fig)])
+        bar_fig.update_layout(
+        title={
+            'text': barchart_name,
+            'y':0.94,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'})
+        return dcc.Graph(figure=bar_fig)
     
 # running the server
 if __name__ == '__main__':
