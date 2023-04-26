@@ -248,7 +248,10 @@ def draw_axis(data):
         dcc.Dropdown(id='yaxis-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         # html.Button(id="submit-button", children="Создать график"),
-         html.P("Выберите цвет"),
+        html.P("Выберите размер"),
+        dcc.Dropdown(id='size-data_3',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        html.P("Выберите цвет"),
         dcc.Dropdown(id='color-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         html.P("Введите название графика"),
@@ -262,15 +265,16 @@ def draw_axis(data):
             # Input('submit-button','n_clicks'),
               Input('xaxis-data_3','value'),
               Input('yaxis-data_3', 'value'),
+              Input('size-data_3', 'value'),
               Input('color-data_3', 'value'),
               Input('dotchart-name','value'),
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, color_data, dotchart_name):
+def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
         # print(data)
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
-        dot_fig = px.scatter(df, x=x_data, y=y_data, color=color_data)
+        dot_fig = px.scatter(df, x=x_data, y=y_data, size=size_data, color=color_data)
         # print(data)
         dot_fig.update_layout(
             title={
