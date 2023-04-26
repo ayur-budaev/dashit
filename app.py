@@ -3,11 +3,9 @@ import base64
 import io
 import json
 import plotly.express as px
-
 import dash
 from dash.dependencies import Input, Output, State
 from dash import dcc, html, dash_table
-
 import pandas as pd
 import dash_draggable
 
@@ -56,6 +54,9 @@ app.layout = html.Div([
     ]),
     dash_draggable.ResponsiveGridLayout([
         html.Div(id='barchart-div'),
+        html.Div(id='linechart-div'),
+        html.Div(id='dotchart-div'),
+        html.Div(id='piechart-div'),
     ])
 ])
 
@@ -134,8 +135,10 @@ def get_table(data):
         # })
     ]
 
+######################################## processing the barchart ########################################
 @app.callback(Output('output-axis_1', 'children'),
-              Input('data-file', 'data'), prevent_initial_call=True)
+              Input('data-file', 'data'),
+              prevent_initial_call=True)
 
 def draw_axis(data):
     dataset = json.loads(data)['data']
@@ -143,10 +146,10 @@ def draw_axis(data):
     # print(df.columns)
     return [html.Div(
             [html.P("Выберите ось X"),
-        dcc.Dropdown(id='xaxis-data',
+        dcc.Dropdown(id='xaxis-data_1',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
-        dcc.Dropdown(id='yaxis-data',
+        dcc.Dropdown(id='yaxis-data_1',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         # html.Button(id="submit-button", children="Создать график"),
         html.P("Введите название графика"),
@@ -158,8 +161,8 @@ def draw_axis(data):
 @app.callback(Output('barchart-div', 'children'),
               Input('data-file','data'),
             # Input('submit-button','n_clicks'),
-              Input('xaxis-data','value'),
-              Input('yaxis-data', 'value'),
+              Input('xaxis-data_1','value'),
+              Input('yaxis-data_1', 'value'),
               Input('barchart-name','value'),
               prevent_initial_call=False)
 
@@ -178,6 +181,161 @@ def make_graphs(data, x_data, y_data, barchart_name):
                 'yanchor': 'top'
             }
         )
+        return dcc.Graph(figure=bar_fig)
+
+######################################## processing the linechart ########################################
+@app.callback(Output('output-axis_2', 'children'),
+              Input('data-file', 'data'),
+              prevent_initial_call=True)
+
+def draw_axis(data):
+    dataset = json.loads(data)['data']
+    df = pd.read_json(dataset, orient='split')
+    # print(df.columns)
+    return [html.Div(
+            [html.P("Выберите ось X"),
+        dcc.Dropdown(id='xaxis-data_2',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.P("Выберите ось Y"),
+        dcc.Dropdown(id='yaxis-data_2',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        # html.Button(id="submit-button", children="Создать график"),
+        html.P("Введите название графика"),
+        dcc.Input(id="linechart-name", type="text", placeholder="Название", persistence='local'),
+        html.Hr()],
+        style=DROPDOWN_STYLE    
+        )]
+
+@app.callback(Output('linechart-div', 'children'),
+              Input('data-file','data'),
+            # Input('submit-button','n_clicks'),
+              Input('xaxis-data_2','value'),
+              Input('yaxis-data_2', 'value'),
+              Input('linechart-name','value'),
+              prevent_initial_call=False)
+
+def make_graphs(data, x_data, y_data, linechart_name):
+        # print(data)
+        dataset = json.loads(data)['data']
+        df = pd.read_json(dataset, orient='split')
+        line_fig = px.line(df, x=x_data, y=y_data)
+        # print(data)
+        line_fig.update_layout(
+            title={
+                'text': linechart_name,
+                'y':0.94,
+                'x':0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            }
+        )
+        return dcc.Graph(figure=line_fig)
+
+######################################## processing the dotchart ########################################
+@app.callback(Output('output-axis_3', 'children'),
+              Input('data-file', 'data'),
+              prevent_initial_call=True)
+
+def draw_axis(data):
+    dataset = json.loads(data)['data']
+    df = pd.read_json(dataset, orient='split')
+    # print(df.columns)
+    return [html.Div(
+            [html.P("Выберите ось X"),
+        dcc.Dropdown(id='xaxis-data_3',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.P("Выберите ось Y"),
+        dcc.Dropdown(id='yaxis-data_3',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        # html.Button(id="submit-button", children="Создать график"),
+         html.P("Выберите цвет"),
+        dcc.Dropdown(id='color-data_3',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        html.P("Введите название графика"),
+        dcc.Input(id="dotchart-name", type="text", placeholder="Название", persistence='local'),
+        html.Hr()],
+        style=DROPDOWN_STYLE    
+        )]
+
+@app.callback(Output('dotchart-div', 'children'),
+              Input('data-file','data'),
+            # Input('submit-button','n_clicks'),
+              Input('xaxis-data_3','value'),
+              Input('yaxis-data_3', 'value'),
+              Input('color-data_3', 'value'),
+              Input('dotchart-name','value'),
+              prevent_initial_call=False)
+
+def make_graphs(data, x_data, y_data, color_data, dotchart_name):
+        # print(data)
+        dataset = json.loads(data)['data']
+        df = pd.read_json(dataset, orient='split')
+        dot_fig = px.scatter(df, x=x_data, y=y_data, color=color_data)
+        # print(data)
+        dot_fig.update_layout(
+            title={
+                'text': dotchart_name,
+                'y':0.94,
+                'x':0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            }
+        )
+        return dcc.Graph(figure=dot_fig)
+
+######################################## processing the piechart ########################################
+@app.callback(Output('output-axis_4', 'children'),
+              Input('data-file', 'data'),
+              prevent_initial_call=True)
+
+def draw_axis(data):
+    dataset = json.loads(data)['data']
+    df = pd.read_json(dataset, orient='split')
+    # print(df.columns)
+    return [html.Div(
+            [html.P("Выберите секторы"),
+        dcc.Dropdown(id='xaxis-data_4',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.P("Выберите метки"),
+        dcc.Dropdown(id='yaxis-data_4',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        # html.Button(id="submit-button", children="Создать график"),
+        html.P("Введите название графика"),
+        dcc.Input(id="piechart-name", type="text", placeholder="Название", persistence='local'),
+        html.Hr()],
+        style=DROPDOWN_STYLE    
+        )]
+
+@app.callback(Output('piechart-div', 'children'),
+              Input('data-file','data'),
+            # Input('submit-button','n_clicks'),
+              Input('xaxis-data_4','value'),
+              Input('yaxis-data_4', 'value'),
+              Input('piechart-name','value'),
+              prevent_initial_call=False)
+
+def make_graphs(data, x_data, y_data, piechart_name):
+        # print(data)
+        dataset = json.loads(data)['data']
+        df = pd.read_json(dataset, orient='split')
+        bar_fig = px.pie(df, values=x_data, names=y_data)
+        # print(data)
+        bar_fig.update_layout(
+            title={
+                'text': piechart_name,
+                'y':0.94,
+                'x':0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            }
+        )
+
+        bar_fig.update_traces(
+             textposition="inside",
+            #  automargin = True
+
+        )
+
         return dcc.Graph(figure=bar_fig)
 
 # running the server
