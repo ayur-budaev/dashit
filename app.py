@@ -20,7 +20,11 @@ app = dash.Dash(__name__,
                 suppress_callback_exceptions=True)
 
 app.layout = html.Div([
-    html.H1("Junior-viz", style={'textAlign': 'center'}),
+      html.H1("Junior-viz", style={'textAlign': 'center'}),
+      dcc.Tabs([
+    dcc.Tab(label='Данные', children = [
+         
+   
     dcc.Upload(
         id='upload-data',
         children=html.Div(['Перетащите или ', html.A('выберите файл')]),
@@ -38,6 +42,10 @@ app.layout = html.Div([
     ),
     dcc.Store(id='data-file', storage_type='local'),
     html.Div(id='output-datatable'),
+
+
+    ]),
+    dcc.Tab(label='Визуализация', children = [
 
     dcc.Tabs([
         dcc.Tab(label='Столбчатая диаграмма', children = [
@@ -82,7 +90,8 @@ app.layout = html.Div([
                 ),
         ]),
     ]),
- 
+    ]),
+ ]),
     dash_draggable.ResponsiveGridLayout([
         html.Div(id='barchart-div'),
         html.Div(id='linechart-div'),
@@ -91,6 +100,7 @@ app.layout = html.Div([
         # html.Div(id='output-image-upload')
         html.Div(id='textarea-example-output', style={'whiteSpace': 'pre-line'})
     ])
+    
     
 ])
 
