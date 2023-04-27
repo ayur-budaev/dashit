@@ -77,9 +77,8 @@ app.layout = html.Div([
                 dcc.Textarea(
                 id='textarea-example',
                 value='Что-то написано',
-                style={'width': '100%', 'height': 300, 'resize': 'none'},
+                style={'width': '50%', 'height': 300, 'resize': 'none'},
                 persistence='local',
-                
                 ),
         ]),
     ]),
@@ -407,7 +406,7 @@ def make_graphs(data, x_data, y_data, piechart_name):
 def update_output(value):
     return dcc.Textarea(format(value),
                         value=value,
-                        style={'width': '100%', 'height': 300, 'resize': 'none'},)
+                        style={'width': '100%', 'height': 500, 'resize': 'none', 'overflow': 'hidden', },)
 
 # running the server
 if __name__ == '__main__':
