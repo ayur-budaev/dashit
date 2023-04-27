@@ -38,6 +38,7 @@ app.layout = html.Div([
     ),
     dcc.Store(id='data-file', storage_type='local'),
     html.Div(id='output-datatable'),
+
     dcc.Tabs([
         dcc.Tab(label='Столбчатая диаграмма', children = [
             html.Div(id='output-axis_1'),
@@ -51,13 +52,47 @@ app.layout = html.Div([
         dcc.Tab(label='Круговая диаграмма', children = [
             html.Div(id='output-axis_4'),
         ]),
+        dcc.Tab(label='Изображение', children = [
+            dcc.Upload(
+            id='upload-image',
+            children=html.Div([
+                'Drag and Drop or ',
+                html.A('Select Files')
+            ]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            # Allow multiple files to be uploaded
+            multiple=True
+            ),
+        ]),
+        dcc.Tab(label='Текст', children = [
+                dcc.Textarea(
+                id='textarea-example',
+                value='Что-то написано',
+                style={'width': '100%', 'height': 300, 'resize': 'none'},
+                persistence='local',
+                
+                ),
+        ]),
     ]),
+ 
     dash_draggable.ResponsiveGridLayout([
         html.Div(id='barchart-div'),
         html.Div(id='linechart-div'),
         html.Div(id='dotchart-div'),
         html.Div(id='piechart-div'),
+        # html.Div(id='output-image-upload')
+        html.Div(id='textarea-example-output', style={'whiteSpace': 'pre-line'})
     ])
+    
 ])
 
 def parse_contents(contents, filename):
@@ -79,6 +114,8 @@ def parse_contents(contents, filename):
             print('parse_contents: ', e)
 
     return df_uploaded
+
+
 
 
 @app.callback(Output('data-file', 'data'),
@@ -341,6 +378,36 @@ def make_graphs(data, x_data, y_data, piechart_name):
         )
 
         return dcc.Graph(figure=bar_fig)
+
+######################################## processing the image ########################################
+# def img_parse_contents(contents, filename, date):
+#     return html.Div([
+#         html.H5(filename),
+#         # HTML images accept base64 encoded strings in the same format
+#         # that is supplied by the upload
+#         html.Img(src=contents),
+#     ])
+
+# @app.callback(Output('output-image-upload', 'children'),
+#               Input('upload-image', 'contents'),
+#               State('upload-image', 'filename'),
+#               State('upload-image', 'last_modified'))
+# def update_output(list_of_contents, list_of_names, list_of_dates):
+#     if list_of_contents is not None:
+#         children = [
+#             img_parse_contents(c, n, d) for c, n, d in
+#             zip(list_of_contents, list_of_names, list_of_dates)]
+#         return children
+
+######################################## processing the text ########################################
+@app.callback(
+    Output('textarea-example-output', 'children'),
+    Input('textarea-example', 'value')
+)
+def update_output(value):
+    return dcc.Textarea(format(value),
+                        value=value,
+                        style={'width': '100%', 'height': 300, 'resize': 'none'},)
 
 # running the server
 if __name__ == '__main__':
