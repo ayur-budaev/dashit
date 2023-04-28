@@ -155,6 +155,7 @@ def get_table(data):
         dash_table.DataTable(
             data=df.to_dict('records'),
             columns=[{'name': i, 'id': i} for i in df.columns],
+
             editable=True,
             filter_action="native",
             sort_action="native",
