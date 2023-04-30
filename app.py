@@ -11,6 +11,10 @@ import dash_draggable
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
+TABS_STYLE = {
+    'height': 400
+}
+
 DROPDOWN_STYLE = {
     'width': '25%'
 }
@@ -49,19 +53,19 @@ app.layout = html.Div([
 
     dcc.Tabs([
         dcc.Tab(label='Столбчатая диаграмма', children = [
-            html.Div(id='output-axis_1'),
+            html.Div(id='output-axis_1', style=TABS_STYLE),
         ]),
         dcc.Tab(label='Линейная диаграмма', children = [
-            html.Div(id='output-axis_2'),
+            html.Div(id='output-axis_2', style=TABS_STYLE),
         ]),
         dcc.Tab(label='Точечная диаграмма', children = [
-            html.Div(id='output-axis_3'),
+            html.Div(id='output-axis_3', style=TABS_STYLE),
         ]),
         dcc.Tab(label='Круговая диаграмма', children = [
-            html.Div(id='output-axis_4'),
+            html.Div(id='output-axis_4', style=TABS_STYLE),
         ]),
         dcc.Tab(label='Изображение', children = [
-            dcc.Upload(
+            html.Div(dcc.Upload(
             id='upload-image',
             children=html.Div([
                 'Drag and Drop or ',
@@ -79,15 +83,15 @@ app.layout = html.Div([
             },
             # Allow multiple files to be uploaded
             multiple=True
-            ),
+            ), style=TABS_STYLE),
         ]),
         dcc.Tab(label='Текст', children = [
-                dcc.Textarea(
+                html.Div(dcc.Textarea(
                 id='textarea-example',
                 value='Что-то написано',
-                style={'width': '50%', 'height': 300, 'resize': 'none'},
+                style={'width': '50%', 'height': 400, 'resize': 'none'},
                 persistence='local',
-                ),
+                ), style=TABS_STYLE),
         ]),
     ]),
     ]),
@@ -197,8 +201,17 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
         dcc.Dropdown(id='yaxis-data_1',
-                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+                     options=[{'label':x, 'value':x} for x in df.columns], multi=True, persistence='local'), 
         # html.Button(id="submit-button", children="Создать график"),
+        html.P("Агрегация"),
+        dcc.Dropdown(id='agg-data_1',
+                     options={
+                         'sum': 'Сумма',
+                         'avg': 'Среднее',
+                         'count': 'Количество',
+                         'min': 'Минимум',
+                         'max': 'Максимум',
+                         }, persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="barchart-name", type="text", placeholder="Название", persistence='local'),
         html.Hr()],
@@ -210,14 +223,15 @@ def draw_axis(data):
             # Input('submit-button','n_clicks'),
               Input('xaxis-data_1','value'),
               Input('yaxis-data_1', 'value'),
+              Input('agg-data_1', 'value'),
               Input('barchart-name','value'),
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, barchart_name):
+def make_graphs(data, x_data, y_data, agg_data, barchart_name):
         # print(data)
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
-        bar_fig = px.bar(df, x=x_data, y=y_data)
+        bar_fig = px.histogram(df, x=x_data, y=y_data, histfunc=agg_data)
         # print(data)
         bar_fig.update_layout(
             title={
