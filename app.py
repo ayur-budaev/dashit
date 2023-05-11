@@ -234,6 +234,7 @@ def draw_axis(data):
         style=DROPDOWN_STYLE    
         )]
 
+### dictionary for an aggregation ###
 d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
     
 @app.callback([
@@ -412,7 +413,20 @@ def make_graphs(data, x_data, y_data, piechart_name):
         # print(data)
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
-        bar_fig = px.pie(df, values=x_data, names=y_data)
+        
+
+        df_temp = df.groupby(y_data).count()
+        
+        if df_temp.shape[0] > 9:
+             df_temp = df_temp.sort_values(x_data, ascending = False).reset_index()
+             df_temp.loc[7:, y_data] = 'Другое'
+             df_temp = df_temp.groupby(y_data).sum()
+        
+        print(df_temp)
+        print(y_data)
+
+        # bar_fig = px.pie(df, values=x_data, names=y_data)
+        bar_fig = px.pie(df_temp, values=x_data, names=df_temp.index)
         # print(data)
         bar_fig.update_layout(
             title={
