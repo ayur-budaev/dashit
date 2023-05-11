@@ -56,18 +56,23 @@ app.layout = html.Div([
     dcc.Tabs([
         dcc.Tab(label='Столбчатая диаграмма', children = [
             html.Div(id='output-axis_1', style=TABS_STYLE), 
+            html.Div(id='barchart-div-dupl'),
         ]),
         dcc.Tab(label='Линейная диаграмма', children = [
             html.Div(id='output-axis_2', style=TABS_STYLE),
+            html.Div(id='linechart-div-dupl'),
         ]),
         dcc.Tab(label='Точечная диаграмма', children = [
             html.Div(id='output-axis_3', style=TABS_STYLE),
+            html.Div(id='dotchart-div-dupl')
         ]),
         dcc.Tab(label='Круговая диаграмма', children = [
             html.Div(id='output-axis_4', style=TABS_STYLE),
+            html.Div(id='piechart-div-dupl')
         ]),
         dcc.Tab(label='Облако слов', children = [
             html.Div(id='output-worcloud', style=TABS_STYLE),
+            html.Div(id='wordcloud-div-dupl')
         ]),
 
         # dcc.Tab(label='Изображение', children = [
@@ -231,13 +236,15 @@ def draw_axis(data):
 
 d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
     
-@app.callback(Output('barchart-div', 'children'),
-              Input('data-file','data'),
+@app.callback([
+              Output('barchart-div-dupl', 'children'),
+              Output('barchart-div', 'children')],
+              [Input('data-file','data'),
             # Input('submit-button','n_clicks'),
               Input('xaxis-data_1','value'),
               Input('yaxis-data_1', 'value'),
               Input('agg-data_1', 'value'),
-              Input('barchart-name','value'),
+              Input('barchart-name','value')],
               prevent_initial_call=False)
 
 def make_graphs(data, x_data, y_data, agg_data, barchart_name):
@@ -258,7 +265,7 @@ def make_graphs(data, x_data, y_data, agg_data, barchart_name):
                 'yanchor': 'top'
             }
         )
-        return dcc.Graph(figure=bar_fig)
+        return dcc.Graph(figure=bar_fig), dcc.Graph(figure=bar_fig)
 
 ######################################## processing the linechart ########################################
 @app.callback(Output('output-axis_2', 'children'),
@@ -283,12 +290,13 @@ def draw_axis(data):
         style=DROPDOWN_STYLE    
         )]
 
-@app.callback(Output('linechart-div', 'children'),
-              Input('data-file','data'),
+@app.callback([Output('linechart-div-dupl', 'children'),
+               Output('linechart-div', 'children')],
+              [Input('data-file','data'),
             # Input('submit-button','n_clicks'),
               Input('xaxis-data_2','value'),
               Input('yaxis-data_2', 'value'),
-              Input('linechart-name','value'),
+              Input('linechart-name','value')],
               prevent_initial_call=False)
 
 def make_graphs(data, x_data, y_data, linechart_name):
@@ -306,7 +314,7 @@ def make_graphs(data, x_data, y_data, linechart_name):
                 'yanchor': 'top'
             }
         )
-        return dcc.Graph(figure=line_fig)
+        return dcc.Graph(figure=line_fig), dcc.Graph(figure=line_fig)
 
 ######################################## processing the dotchart ########################################
 @app.callback(Output('output-axis_3', 'children'),
@@ -337,14 +345,15 @@ def draw_axis(data):
         style=DROPDOWN_STYLE    
         )]
 
-@app.callback(Output('dotchart-div', 'children'),
-              Input('data-file','data'),
+@app.callback([Output('dotchart-div-dupl', 'children'),
+               Output('dotchart-div', 'children')],
+              [Input('data-file','data'),
             # Input('submit-button','n_clicks'),
               Input('xaxis-data_3','value'),
               Input('yaxis-data_3', 'value'),
               Input('size-data_3', 'value'),
               Input('color-data_3', 'value'),
-              Input('dotchart-name','value'),
+              Input('dotchart-name','value')],
               prevent_initial_call=False)
 
 def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
@@ -365,7 +374,7 @@ def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
                 'yanchor': 'top'
             }
         )
-        return dcc.Graph(figure=dot_fig)
+        return dcc.Graph(figure=dot_fig), dcc.Graph(figure=dot_fig)
 
 ######################################## processing the piechart ########################################
 @app.callback(Output('output-axis_4', 'children'),
@@ -390,12 +399,13 @@ def draw_axis(data):
         style=DROPDOWN_STYLE    
         )]
 
-@app.callback(Output('piechart-div', 'children'),
-              Input('data-file','data'),
+@app.callback([Output('piechart-div-dupl', 'children'),
+               Output('piechart-div', 'children')],
+              [Input('data-file','data'),
             # Input('submit-button','n_clicks'),
               Input('xaxis-data_4','value'),
               Input('yaxis-data_4', 'value'),
-              Input('piechart-name','value'),
+              Input('piechart-name','value')],
               prevent_initial_call=False)
 
 def make_graphs(data, x_data, y_data, piechart_name):
@@ -421,7 +431,7 @@ def make_graphs(data, x_data, y_data, piechart_name):
 
         )
 
-        return dcc.Graph(figure=bar_fig)
+        return dcc.Graph(figure=bar_fig), dcc.Graph(figure=bar_fig)
 
 
 
@@ -499,13 +509,14 @@ def set_worcloud(data):
                     )
             ]
 
-@app.callback(Output('wordcloud-div', 'children'),
-              Input('data-file', 'data'),
+@app.callback([Output('wordcloud-div-dupl', 'children'),
+               Output('wordcloud-div', 'children')],
+              [Input('data-file', 'data'),
               Input('worcloud_column', 'value'),
               Input('width-slider', 'value'),
               Input('height-slider', 'value'),
               Input('grid-slider', 'value'),
-              Input('words-color', 'value'),
+              Input('words-color', 'value')],
               prevent_initial_call=True)
 
 def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsColor):
@@ -530,9 +541,7 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
     except:
         pass        
     
-
-    # print(window.style)
-    return DashWordcloud(
+    jopa = DashWordcloud(
             id='wordcloud',
             list=security_data,
             width=sliderWidth, height=sliderHeight,
@@ -545,6 +554,9 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
             shape='square',
             hover=True
             )
+
+    # print(window.style)
+    return jopa, jopa
 
 
 # running the server
