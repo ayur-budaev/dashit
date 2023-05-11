@@ -4,15 +4,18 @@ import io
 import json
 import plotly.express as px
 import dash
+import numpy as np
 from dash.dependencies import Input, Output, State
 from dash import dcc, html, dash_table
+import dash_daq as daq
 import pandas as pd
 import dash_draggable
+from dash_holoniq_wordcloud import DashWordcloud
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 TABS_STYLE = {
-    'height': 400
+     'height': 600
 }
 
 DROPDOWN_STYLE = {
@@ -28,7 +31,6 @@ app.layout = html.Div([
       dcc.Tabs([
     dcc.Tab(label='Данные', children = [
          
-   
     dcc.Upload(
         id='upload-data',
         children=html.Div(['Перетащите или ', html.A('выберите файл')]),
@@ -53,7 +55,7 @@ app.layout = html.Div([
 
     dcc.Tabs([
         dcc.Tab(label='Столбчатая диаграмма', children = [
-            html.Div(id='output-axis_1', style=TABS_STYLE),
+            html.Div(id='output-axis_1', style=TABS_STYLE), 
         ]),
         dcc.Tab(label='Линейная диаграмма', children = [
             html.Div(id='output-axis_2', style=TABS_STYLE),
@@ -64,35 +66,45 @@ app.layout = html.Div([
         dcc.Tab(label='Круговая диаграмма', children = [
             html.Div(id='output-axis_4', style=TABS_STYLE),
         ]),
-        dcc.Tab(label='Изображение', children = [
-            html.Div(dcc.Upload(
-            id='upload-image',
-            children=html.Div([
-                'Drag and Drop or ',
-                html.A('Select Files')
-            ]),
-            style={
-                'width': '100%',
-                'height': '60px',
-                'lineHeight': '60px',
-                'borderWidth': '1px',
-                'borderStyle': 'dashed',
-                'borderRadius': '5px',
-                'textAlign': 'center',
-                'margin': '10px'
-            },
-            # Allow multiple files to be uploaded
-            multiple=True
-            ), style=TABS_STYLE),
+        dcc.Tab(label='Облако слов', children = [
+            html.Div(id='output-worcloud', style=TABS_STYLE),
         ]),
-        dcc.Tab(label='Текст', children = [
-                html.Div(dcc.Textarea(
-                id='textarea-example',
-                value='Что-то написано',
-                style={'width': '50%', 'height': 400, 'resize': 'none'},
-                persistence='local',
-                ), style=TABS_STYLE),
-        ]),
+
+        # dcc.Tab(label='Изображение', children = [
+        #     html.Div(dcc.Upload(
+        #     id='upload-image',
+        #     children=html.Div([
+        #         'Drag and Drop or ',
+        #         html.A('Select Files')
+        #     ]),
+        #     style={
+        #         'width': '100%',
+        #         'height': '60px',
+        #         'lineHeight': '60px',
+        #         'borderWidth': '1px',
+        #         'borderStyle': 'dashed',
+        #         'borderRadius': '5px',
+        #         'textAlign': 'center',
+        #         'margin': '10px'
+        #     },
+        #     # Allow multiple files to be uploaded
+        #     multiple=True
+        #     ), style=TABS_STYLE),
+        # ]),
+        
+        dcc.Tab(label='Текст', 
+                children = [
+                html.Div([
+                    dcc.Textarea(
+                        id='textarea-example',
+                        value='Что-то написано',
+                        style={'width': '50%', 'height': 400, 'resize': 'none'},
+                        persistence='local',
+                ),
+                    dcc.Slider(min=6, max=24, step=1, value=14, id='text-size-slider', marks=None,
+                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local')],
+                style=TABS_STYLE),
+                ]),
     ]),
     ]),
  ]),
@@ -101,10 +113,10 @@ app.layout = html.Div([
         html.Div(id='linechart-div'),
         html.Div(id='dotchart-div'),
         html.Div(id='piechart-div'),
-        # html.Div(id='output-image-upload')
-        html.Div(id='textarea-example-output', style={'whiteSpace': 'pre-line'})
+        html.Div(id='wordcloud-div'),
+        # html.Div(id='output-image-upload'),
+        html.Div(id='textarea-example-output', style={'whiteSpace': 'pre-line'}),
     ])
-    
     
 ])
 
@@ -121,15 +133,12 @@ def parse_contents(contents, filename):
                 df_uploaded = pd.read_csv(
                     io.StringIO(decoded.decode('utf-8')))
             elif 'xls' in filename:
-                # Assume that the user uploaded an excel file
+                # Ase that the user uploaded an excel file
                 df_uploaded = pd.read_excel(io.BytesIO(decoded))
         except Exception as e:
             print('parse_contents: ', e)
 
     return df_uploaded
-
-
-
 
 @app.callback(Output('data-file', 'data'),
               Input('upload-data', 'contents'),
@@ -157,6 +166,7 @@ def get_table(data):
 
     return [html.H5(dataset['filename']),
         dash_table.DataTable(
+            id = 'df-table',
             data=df.to_dict('records'),
             columns=[{'name': i, 'id': i} for i in df.columns],
 
@@ -186,11 +196,12 @@ def get_table(data):
         # })
     ]
 
+
 ######################################## processing the barchart ########################################
+
 @app.callback(Output('output-axis_1', 'children'),
               Input('data-file', 'data'),
               prevent_initial_call=True)
-
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
@@ -218,6 +229,8 @@ def draw_axis(data):
         style=DROPDOWN_STYLE    
         )]
 
+d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
+    
 @app.callback(Output('barchart-div', 'children'),
               Input('data-file','data'),
             # Input('submit-button','n_clicks'),
@@ -231,7 +244,10 @@ def make_graphs(data, x_data, y_data, agg_data, barchart_name):
         # print(data)
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
-        bar_fig = px.histogram(df, x=x_data, y=y_data, histfunc=agg_data)
+        nnn = df.groupby(x_data)[y_data]
+        r = {'nnn':nnn}
+        exec('nnn = nnn.'+d[agg_data], r)
+        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data)
         # print(data)
         bar_fig.update_layout(
             title={
@@ -335,6 +351,9 @@ def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
         # print(data)
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
+        for i in [x_data, y_data, size_data, color_data]:
+            if not pd.isna(i):
+                df = df.loc[~df[i].isna()]
         dot_fig = px.scatter(df, x=x_data, y=y_data, size=size_data, color=color_data)
         # print(data)
         dot_fig.update_layout(
@@ -396,21 +415,30 @@ def make_graphs(data, x_data, y_data, piechart_name):
         )
 
         bar_fig.update_traces(
-             textposition="inside",
+             textposition="inside", 
+             textinfo='percent+label'
             #  automargin = True
 
         )
 
         return dcc.Graph(figure=bar_fig)
 
+
+
 ######################################## processing the image ########################################
+
 # def img_parse_contents(contents, filename, date):
 #     return html.Div([
 #         html.H5(filename),
+#         html.Img(src=contents),
+#         # html.Div(html.Img(src=contents), style = {'width': 222, 'height': 400,'background-image': 'url("html.Img(src=contents)")'})
 #         # HTML images accept base64 encoded strings in the same format
 #         # that is supplied by the upload
-#         html.Img(src=contents),
+#         # html.Div(style = {'width': 222, 'height': 400,'background-image': contents}),
+#         # html.Div(style = {'width': 222, 'height': 400,'background-image': 'url("data:image/png;base64, base64.b64encode(image).decode(\'utf-8\')")'})
+        
 #     ])
+
 
 # @app.callback(Output('output-image-upload', 'children'),
 #               Input('upload-image', 'contents'),
@@ -426,12 +454,98 @@ def make_graphs(data, x_data, y_data, piechart_name):
 ######################################## processing the text ########################################
 @app.callback(
     Output('textarea-example-output', 'children'),
-    Input('textarea-example', 'value')
+    Input('textarea-example', 'value'),
+    Input('text-size-slider', 'value')
+    
 )
-def update_output(value):
-    return dcc.Textarea(format(value),
-                        value=value,
-                        style={'width': '100%', 'height': 500, 'resize': 'none', 'overflow': 'hidden', },)
+def update_output(text, size):
+    return html.P(format(text), 
+                  style = {
+                    'font-size': size
+                    })
+
+######################################## processing the wordcloud ########################################
+
+@app.callback(Output('output-worcloud', 'children'),
+              Input('data-file', 'data'),
+              prevent_initial_call=True)
+def set_worcloud(data):    
+    
+    dataset = json.loads(data)['data']
+    df = pd.read_json(dataset, orient='split')
+    # print(df.columns[np.array([df[i].dtype == 'object' for i in df.columns])].tolist())
+    return [html.Div(
+                    [html.P("Выберите данные"),
+                    dcc.Dropdown(id='worcloud_column',
+                        options=df.columns[np.array([df[i].dtype == 'object' for i in df.columns])].tolist(),
+                        persistence='local'),
+                    html.P("Ширина"),
+                    dcc.Slider(min=200, max=1000, step=50, value=500, id='width-slider', marks=None,
+                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+                    html.P("Высота"),
+                    dcc.Slider(min=200, max=1000, step=50, value=500, id='height-slider', marks=None,
+                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+                    html.P("Сетка"),
+                    dcc.Slider(min=5, max=100, step=5, value=30, id='grid-slider', marks=None,
+                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+                    html.P("Выберите цвет"),
+                    daq.ColorPicker(
+                        id='words-color',
+                        value=dict(hex='#000000'),
+                        size=200,
+                        persistence='local'
+                    )],
+                    style=DROPDOWN_STYLE
+                    )
+            ]
+
+@app.callback(Output('wordcloud-div', 'children'),
+              Input('data-file', 'data'),
+              Input('worcloud_column', 'value'),
+              Input('width-slider', 'value'),
+              Input('height-slider', 'value'),
+              Input('grid-slider', 'value'),
+              Input('words-color', 'value'),
+              prevent_initial_call=True)
+
+def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsColor):
+    security_data = [
+    ["Equity", 74, "Zillions of equity based funds"],
+    ["Bond", 45],
+    ["Global", 30],
+    ["Sector Equity", 17],
+    ["EUR", 15],
+    ["Large Cap", 13],
+    ["Europe", 11],
+    ]
+
+    dataset = json.loads(data)['data']
+    df = pd.read_json(dataset, orient='split')
+
+    try:
+        security_data = []
+        df_temp = df[column].value_counts()
+        for k, v in df_temp.items():
+            security_data.append([k, v])            
+    except:
+        pass        
+    
+
+    # print(window.style)
+    return DashWordcloud(
+            id='wordcloud',
+            list=security_data,
+            width=sliderWidth, height=sliderHeight,
+            gridSize=sliderGrid,
+            color=wordsColor['hex'],
+            backgroundColor='#fff',
+            shuffle=False,
+            rotateRatio=0.5,
+            shrinkToFit=True,
+            shape='square',
+            hover=True
+            )
+
 
 # running the server
 if __name__ == '__main__':
