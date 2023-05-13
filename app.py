@@ -25,178 +25,178 @@ DROPDOWN_STYLE = {
 
 app = dash.Dash(__name__, 
                 # external_stylesheets=external_stylesheets,
-                external_stylesheets=[dbc.themes.LUX],
+                external_stylesheets=[dbc.themes.LUMEN],
                 suppress_callback_exceptions=True)
 
 app.layout = html.Div([
          
-            html.H1("Junior-viz", style={'textAlign': 'center', 'margin-top': 7}),
+    html.H1("Junior-viz", style={'textAlign': 'center', 'margin-top': 7, 'margin-bottom': 7}),
 
-            dcc.Tabs([
-                dcc.Tab(label='Данные', children = [
+    dcc.Tabs([
+        
+        dcc.Tab(label='Данные', children = [
                     
-                    dcc.Upload(
-                        id='upload-data',
-                        children=html.Div(['Перетащите или ', html.A('выберите файл')]),
-                        style={
-                            'width': '99%',
-                            'height': '60px',
-                            'lineHeight': '60px',
-                            'borderWidth': '1px',
-                            'borderStyle': 'dashed',
-                            'borderRadius': '5px',
-                            'textAlign': 'center',
-                            'margin': '10px'
-                        },
-                        multiple=False
-                    ),
+            dcc.Upload(
+                id='upload-data',
+                children=html.Div(['Перетащите или ', html.A('выберите файл')]),
+                style={
+                    'width': '99%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '1px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '5px',
+                    'textAlign': 'center',
+                    'margin': '10px'
+                },
+                multiple=False
+            ),
                     
-                    dcc.Store(id='data-file', storage_type='local'),
-                    html.Div(id='output-datatable'),
+            dcc.Store(id='data-file', storage_type='local'),
+            html.Div(id='output-datatable'),
 
-                    ]),
-            dcc.Tab(label='Визуализация', children = [
+        ]),
+                
+        dcc.Tab(label='Визуализация', children = [
 
             dcc.Tabs([
                 dcc.Tab(label='Столбчатая диаграмма', children = [
                     dbc.Container([
-                         
+                                
                         dbc.Row([ 
                             dbc.Col([
-                                 
-                                 html.Div(id='output-axis_1', style=TABS_STYLE)
+                                        
+                                html.Div(id='output-axis_1', style=TABS_STYLE)
 
                             ], width={'size':4}),
-                            
+                                    
                             dbc.Col([
                                 html.Div(id='barchart-div-dupl'),
-                            ], width={'size':6, 'offset':2})
+                            ], width={'size':7, 'offset':1})
                         ]), 
 
                     ], fluid=True)
-
                 ]),
+
                 dcc.Tab(label='Линейная диаграмма', children = [
                     dbc.Container([
-                         
-                        dbc.Row([ 
-                            dbc.Col([
-                                 
-                                 html.Div(id='output-axis_2', style=TABS_STYLE),
-
+                                
+                        dbc.Row([
+                              
+                            dbc.Col([       
+                                html.Div(id='output-axis_2', style=TABS_STYLE),
                             ], width={'size':4}),
-                            
+                                    
                             dbc.Col([
                                 html.Div(id='linechart-div-dupl'),
-                            ], width={'size':6, 'offset':2})
+                            ], width={'size':7, 'offset':1})
+
                         ]), 
-
                     ], fluid=True)
-
-                    # html.Div(id='output-axis_2', style=TABS_STYLE),
-                    # html.Div(id='linechart-div-dupl'),
                 ]),
+
                 dcc.Tab(label='Точечная диаграмма', children = [
                     dbc.Container([
-                         
+                                
                         dbc.Row([ 
-                            dbc.Col([
-                                 
-                                 html.Div(id='output-axis_3', style=TABS_STYLE),
-
-                            ], width={'size':4}),
                             
+                            dbc.Col([ 
+                                html.Div(id='output-axis_3', style=TABS_STYLE),
+                            ], width={'size':4}),
+
                             dbc.Col([
                                 html.Div(id='dotchart-div-dupl'),
-                            ], width={'size':6, 'offset':2})
-                        ]), 
+                            ], width={'size':7, 'offset':1})
 
+                        ]), 
                     ], fluid=True)
                 ]),
+
                 dcc.Tab(label='Круговая диаграмма', children = [
                     dbc.Container([
-                         
+                                
                         dbc.Row([ 
-                            dbc.Col([
-                                 
-                                 html.Div(id='output-axis_4', style=TABS_STYLE),
-
+                             
+                            dbc.Col([  
+                                html.Div(id='output-axis_4', style=TABS_STYLE),
                             ], width={'size':4}),
-                            
+                                    
                             dbc.Col([
                                 html.Div(id='piechart-div-dupl'),
-                            ], width={'size':6, 'offset':2})
-                        ]), 
+                            ], width={'size':7, 'offset':1})
 
+                        ]), 
                     ], fluid=True)
                 ]),
+
                 dcc.Tab(label='Облако слов', children = [
                     dbc.Container([
-                         
+                                
                         dbc.Row([ 
-                            dbc.Col([
-                                 
-                                 html.Div(id='output-worcloud', style=TABS_STYLE),
-
+                             
+                            dbc.Col([        
+                                html.Div(id='output-worcloud', style=TABS_STYLE),
                             ], width={'size':4}),
-                            
+                                    
                             dbc.Col([
                                 html.Div(id='wordcloud-div-dupl'),
-                            ], width={'size':6, 'offset':2})
-                        ]), 
+                            ], width={'size':7, 'offset':1})
 
+                        ]), 
                     ], fluid=True)
                 ]),
 
-                # dcc.Tab(label='Изображение', children = [
-                #     html.Div(dcc.Upload(
-                #     id='upload-image',
-                #     children=html.Div([
-                #         'Drag and Drop or ',
-                #         html.A('Select Files')
-                #     ]),
-                #     style={
-                #         'width': '100%',
-                #         'height': '60px',
-                #         'lineHeight': '60px',
-                #         'borderWidth': '1px',
-                #         'borderStyle': 'dashed',
-                #         'borderRadius': '5px',
-                #         'textAlign': 'center',
-                #         'margin': '10px'
-                #     },
-                #     # Allow multiple files to be uploaded
-                #     multiple=True
-                #     ), style=TABS_STYLE),
-                # ]),
-                
+                        # dcc.Tab(label='Изображение', children = [
+                        #     html.Div(dcc.Upload(
+                        #     id='upload-image',
+                        #     children=html.Div([
+                        #         'Drag and Drop or ',
+                        #         html.A('Select Files')
+                        #     ]),
+                        #     style={
+                        #         'width': '100%',
+                        #         'height': '60px',
+                        #         'lineHeight': '60px',
+                        #         'borderWidth': '1px',
+                        #         'borderStyle': 'dashed',
+                        #         'borderRadius': '5px',
+                        #         'textAlign': 'center',
+                        #         'margin': '10px'
+                        #     },
+                        #     # Allow multiple files to be uploaded
+                        #     multiple=True
+                        #     ), style=TABS_STYLE),
+                        # ]),
+                        
                 dcc.Tab(label='Текст', children = [
                     dbc.Container([
-                         
+                                
                         dbc.Row([ 
                             dbc.Col([
                                 html.P("Размер текста"),
                                 dcc.Slider(min=6, max=24, step=1, value=14, id='text-size-slider', marks=None,
                                     tooltip={"placement": "bottom", "always_visible": True}, persistence='local')
                             ], width={'size':4}),
-                            
+                                    
                             dbc.Col([
                                 dcc.Textarea(
                                     id='textarea-example',
                                     value='Что-то написано',
-                                    style={'width': '50%', 'height': 400, 'resize': 'none'},
+                                    style={'width': '100%', 'height': 400, 'resize': 'none'},
                                     persistence='local',
                                 ),
-                            ], width={'size':6, 'offset':2})
+                            ], width={'size':7, 'offset':1})
+                                
                         ]), 
-
                     ], fluid=True)
                 ]),
- 
 
             ]),
-            ]),
         ]),
+
+
+        
+        dcc.Tab(label='Дашборд', children = [
             dash_draggable.ResponsiveGridLayout([
                 html.Div(id='barchart-div'),
                 html.Div(id='linechart-div'),
@@ -205,8 +205,9 @@ app.layout = html.Div([
                 html.Div(id='wordcloud-div'),
                 # html.Div(id='output-image-upload'),
                 html.Div(id='textarea-example-output', style={'whiteSpace': 'pre-line'}),
-            
             ])
+        ])
+    ]),
 ])
 
 def parse_contents(contents, filename):
@@ -272,7 +273,6 @@ def get_table(data):
             page_size=10
         ),
 
-        html.Hr()
     ]
 
 
@@ -284,8 +284,8 @@ def get_table(data):
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
-    return [html.Div(
-            [html.P("Выберите ось X"),
+    return [html.Div([
+        html.P("Выберите ось X"),
         dcc.Dropdown(id='xaxis-data_1',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
@@ -305,7 +305,7 @@ def draw_axis(data):
         # html.Hr()
         ],
         style=DROPDOWN_STYLE    
-        )]
+    )]
 
 ### dictionary for an aggregation ###
 d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
@@ -346,8 +346,8 @@ def make_graphs(data, x_data, y_data, agg_data, barchart_name):
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
-    return [html.Div(
-            [html.P("Выберите ось X"),
+    return [html.Div([
+        html.P("Выберите ось X"),
         dcc.Dropdown(id='xaxis-data_2',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
@@ -355,10 +355,9 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="linechart-name", type="text", placeholder="Название", persistence='local'),
-        # html.Hr()
         ],
         style=DROPDOWN_STYLE    
-        )]
+    )]
 
 @app.callback([Output('linechart-div-dupl', 'children'),
                Output('linechart-div', 'children')],
@@ -391,8 +390,8 @@ def make_graphs(data, x_data, y_data, linechart_name):
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
-    return [html.Div(
-            [html.P("Выберите ось X"),
+    return [html.Div([
+        html.P("Выберите ось X"),
         dcc.Dropdown(id='xaxis-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
@@ -409,7 +408,7 @@ def draw_axis(data):
         # html.Hr()
         ],
         style=DROPDOWN_STYLE    
-        )]
+    )]
 
 @app.callback([Output('dotchart-div-dupl', 'children'),
                Output('dotchart-div', 'children')],
@@ -447,8 +446,8 @@ def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
-    return [html.Div(
-            [html.P("Выберите секторы"),
+    return [html.Div([
+        html.P("Выберите секторы"),
         dcc.Dropdown(id='xaxis-data_4',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите метки"),
@@ -458,7 +457,7 @@ def draw_axis(data):
         dcc.Input(id="piechart-name", type="text", placeholder="Название", persistence='local'),
         ],
         style=DROPDOWN_STYLE    
-        )]
+    )]
 
 @app.callback([Output('piechart-div-dupl', 'children'),
                Output('piechart-div', 'children')],
@@ -530,47 +529,48 @@ def make_graphs(data, x_data, y_data, piechart_name):
     Output('textarea-example-output', 'children'),
     Input('textarea-example', 'value'),
     Input('text-size-slider', 'value')
-    
 )
+
 def update_output(text, size):
     return html.P(format(text), 
-                  style = {
-                    'font-size': size
-                    })
+        style = {
+            'font-size': size
+        }
+    )
 
 ######################################## processing the wordcloud ########################################
 
 @app.callback(Output('output-worcloud', 'children'),
               Input('data-file', 'data'),
               prevent_initial_call=True)
+
 def set_worcloud(data):    
-    
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
-    return [html.Div(
-                    [html.P("Выберите данные"),
-                    dcc.Dropdown(id='worcloud_column',
-                        options=df.columns[np.array([df[i].dtype == 'object' for i in df.columns])].tolist(),
-                        persistence='local'),
-                    html.P("Ширина"),
-                    dcc.Slider(min=200, max=1000, step=50, value=500, id='width-slider', marks=None,
-                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-                    html.P("Высота"),
-                    dcc.Slider(min=200, max=1000, step=50, value=500, id='height-slider', marks=None,
-                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-                    html.P("Сетка"),
-                    dcc.Slider(min=5, max=100, step=5, value=30, id='grid-slider', marks=None,
-                                tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-                    html.P("Выберите цвет"),
-                    daq.ColorPicker(
-                        id='words-color',
-                        value=dict(hex='#000000'),
-                        size=200,
-                        persistence='local'
-                    )],
-                    style=DROPDOWN_STYLE
-                    )
-            ]
+    return [html.Div([
+        html.P("Выберите данные"),
+        dcc.Dropdown(id='worcloud_column',
+                    options=df.columns[np.array([df[i].dtype == 'object' for i in df.columns])].tolist(),
+                    persistence='local'),
+        html.P("Ширина"),
+        dcc.Slider(min=200, max=1000, step=50, value=500, id='width-slider', marks=None,
+                    tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+        html.P("Высота"),
+        dcc.Slider(min=200, max=1000, step=50, value=500, id='height-slider', marks=None,
+                    tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+        html.P("Сетка"),
+        dcc.Slider(min=5, max=100, step=5, value=30, id='grid-slider', marks=None,
+                    tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+        html.P("Выберите цвет"),
+        daq.ColorPicker(
+            id='words-color',
+            value=dict(hex='#000000'),
+            size=200,
+            persistence='local'
+        )],
+        style=DROPDOWN_STYLE
+    )
+    ]
 
 @app.callback([Output('wordcloud-div-dupl', 'children'),
                Output('wordcloud-div', 'children')],
@@ -583,15 +583,7 @@ def set_worcloud(data):
               prevent_initial_call=True)
 
 def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsColor):
-    security_data = [
-    ["Equity", 74, "Zillions of equity based funds"],
-    ["Bond", 45],
-    ["Global", 30],
-    ["Sector Equity", 17],
-    ["EUR", 15],
-    ["Large Cap", 13],
-    ["Europe", 11],
-    ]
+    security_data = []
 
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
@@ -604,7 +596,7 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
     except:
         pass        
     
-    jopa = DashWordcloud(
+    cloud = DashWordcloud(
             id='wordcloud',
             list=security_data,
             width=sliderWidth, height=sliderHeight,
@@ -617,9 +609,9 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
             shrinkToFit=True,
             shape='square',
             hover=True
-            )
+        )
 
-    return jopa, jopa
+    return cloud, cloud
 
 # running the server
 if __name__ == '__main__':
