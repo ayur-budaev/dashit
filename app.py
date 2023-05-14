@@ -1,5 +1,4 @@
 import base64
-# import datetime
 import io
 import json
 import plotly.express as px
@@ -13,14 +12,8 @@ import dash_draggable
 import dash_bootstrap_components as dbc
 from dash_holoniq_wordcloud import DashWordcloud
 
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-TABS_STYLE = {
-    #  'height': 600
-}
-
-DROPDOWN_STYLE = {
-    # 'width': '25%'
+ZOOM = {
+    'zoom': '80%'
 }
 
 app = dash.Dash(__name__, 
@@ -40,14 +33,14 @@ app.layout = html.Div([
                 id='upload-data',
                 children=html.Div(['Перетащите или ', html.A('выберите файл')]),
                 style={
-                    'width': '99%',
+                    'width': '100%',
                     'height': '60px',
                     'lineHeight': '60px',
                     'borderWidth': '1px',
                     'borderStyle': 'dashed',
                     'borderRadius': '5px',
                     'textAlign': 'center',
-                    'margin': '10px'
+                    'margin-top': '10px'
                 },
                 multiple=False
             ),
@@ -66,13 +59,13 @@ app.layout = html.Div([
                         dbc.Row([ 
                             dbc.Col([
                                         
-                                html.Div(id='output-axis_1', style=TABS_STYLE)
+                                html.Div(id='output-axis_1')
 
-                            ], width={'size':4}),
+                            ], width={'size':3}),
                                     
                             dbc.Col([
                                 html.Div(id='barchart-div-dupl'),
-                            ], width={'size':7, 'offset':1})
+                            ], width={'size':8, 'offset':1})
                         ]), 
 
                     ], fluid=True)
@@ -84,12 +77,12 @@ app.layout = html.Div([
                         dbc.Row([
                               
                             dbc.Col([       
-                                html.Div(id='output-axis_2', style=TABS_STYLE),
-                            ], width={'size':4}),
+                                html.Div(id='output-axis_2'),
+                            ], width={'size':3}),
                                     
                             dbc.Col([
                                 html.Div(id='linechart-div-dupl'),
-                            ], width={'size':7, 'offset':1})
+                            ], width={'size':8, 'offset':1})
 
                         ]), 
                     ], fluid=True)
@@ -101,12 +94,12 @@ app.layout = html.Div([
                         dbc.Row([ 
                             
                             dbc.Col([ 
-                                html.Div(id='output-axis_3', style=TABS_STYLE),
-                            ], width={'size':4}),
+                                html.Div(id='output-axis_3'),
+                            ], width={'size':3}),
 
                             dbc.Col([
                                 html.Div(id='dotchart-div-dupl'),
-                            ], width={'size':7, 'offset':1})
+                            ], width={'size':8, 'offset':1})
 
                         ]), 
                     ], fluid=True)
@@ -118,12 +111,12 @@ app.layout = html.Div([
                         dbc.Row([ 
                              
                             dbc.Col([  
-                                html.Div(id='output-axis_4', style=TABS_STYLE),
-                            ], width={'size':4}),
+                                html.Div(id='output-axis_4'),
+                            ], width={'size':3}),
                                     
                             dbc.Col([
                                 html.Div(id='piechart-div-dupl'),
-                            ], width={'size':7, 'offset':1})
+                            ], width={'size':8, 'offset':1})
 
                         ]), 
                     ], fluid=True)
@@ -135,12 +128,12 @@ app.layout = html.Div([
                         dbc.Row([ 
                              
                             dbc.Col([        
-                                html.Div(id='output-worcloud', style=TABS_STYLE),
-                            ], width={'size':4}),
+                                html.Div(id='output-worcloud'),
+                            ], width={'size':3}),
                                     
                             dbc.Col([
                                 html.Div(id='wordcloud-div-dupl'),
-                            ], width={'size':7, 'offset':1})
+                            ], width={'size':8, 'offset':1})
 
                         ]), 
                     ], fluid=True)
@@ -176,7 +169,7 @@ app.layout = html.Div([
                                 html.P("Размер текста"),
                                 dcc.Slider(min=6, max=24, step=1, value=14, id='text-size-slider', marks=None,
                                     tooltip={"placement": "bottom", "always_visible": True}, persistence='local')
-                            ], width={'size':4}),
+                            ], width={'size':3}),
                                     
                             dbc.Col([
                                 dcc.Textarea(
@@ -185,7 +178,7 @@ app.layout = html.Div([
                                     style={'width': '100%', 'height': 400, 'resize': 'none'},
                                     persistence='local',
                                 ),
-                            ], width={'size':7, 'offset':1})
+                            ], width={'size':8, 'offset':1})
                                 
                         ]), 
                     ], fluid=True)
@@ -194,8 +187,6 @@ app.layout = html.Div([
             ]),
         ]),
 
-
-        
         dcc.Tab(label='Дашборд', children = [
             dash_draggable.ResponsiveGridLayout([
                 html.Div(id='barchart-div'),
@@ -208,8 +199,9 @@ app.layout = html.Div([
             ])
         ])
     ]),
-])
+], style=ZOOM)
 
+######################################## processing the data ########################################
 def parse_contents(contents, filename):
     df_uploaded = pd.DataFrame()
 
@@ -237,23 +229,28 @@ def parse_contents(contents, filename):
 def set_data(contents, filename):
     json_data = {'filename':filename}
     df = parse_contents(contents, filename)
+
     try:
         dataset = df.to_json(orient='split', date_format='iso')
-
         json_data['data'] = dataset 
-        # print(dataset)
         return json.dumps(json_data)
+    
     except Exception as e:
         print(e)
         return json.dumps(json_data)
 
 @app.callback(Output('output-datatable', 'children'),
               Input('data-file', 'data'), prevent_initial_call=True)
+
 def get_table(data):
     dataset = json.loads(data)
     df = pd.read_json(dataset['data'], orient='split')
 
-    return [html.H5(dataset['filename']),
+    return [html.H3(dataset['filename'], 
+                    style = {'text-align': 'center',
+                             'margin-top': 15
+                             }),
+
         dash_table.DataTable(
             id = 'df-table',
             data=df.to_dict('records'),
@@ -271,13 +268,12 @@ def get_table(data):
             page_action="native",
             page_current= 0,
             page_size=10
-        ),
+        )
 
     ]
 
 
 ######################################## processing the barchart ########################################
-
 @app.callback(Output('output-axis_1', 'children'),
               Input('data-file', 'data'),
               prevent_initial_call=True)
@@ -303,13 +299,12 @@ def draw_axis(data):
         html.P("Введите название графика"),
         dcc.Input(id="barchart-name", type="text", placeholder="Название", persistence='local'),
         # html.Hr()
-        ],
-        style=DROPDOWN_STYLE    
+        ]
     )]
 
 ### dictionary for an aggregation ###
 d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
-    
+
 @app.callback([
               Output('barchart-div-dupl', 'children'),
               Output('barchart-div', 'children')],
@@ -334,7 +329,8 @@ def make_graphs(data, x_data, y_data, agg_data, barchart_name):
                 'x':0.5,
                 'xanchor': 'center',
                 'yanchor': 'top'
-            }
+            },
+            # height = 600
         )
         return dcc.Graph(figure=bar_fig), dcc.Graph(figure=bar_fig)
 
@@ -355,8 +351,7 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="linechart-name", type="text", placeholder="Название", persistence='local'),
-        ],
-        style=DROPDOWN_STYLE    
+        ]
     )]
 
 @app.callback([Output('linechart-div-dupl', 'children'),
@@ -405,9 +400,7 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="dotchart-name", type="text", placeholder="Название", persistence='local'),
-        # html.Hr()
-        ],
-        style=DROPDOWN_STYLE    
+        ]
     )]
 
 @app.callback([Output('dotchart-div-dupl', 'children'),
@@ -455,8 +448,7 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="piechart-name", type="text", placeholder="Название", persistence='local'),
-        ],
-        style=DROPDOWN_STYLE    
+        ]
     )]
 
 @app.callback([Output('piechart-div-dupl', 'children'),
@@ -499,7 +491,6 @@ def make_graphs(data, x_data, y_data, piechart_name):
         return dcc.Graph(figure=bar_fig), dcc.Graph(figure=bar_fig)
 
 ######################################## processing the image ########################################
-
 # def img_parse_contents(contents, filename, date):
 #     return html.Div([
 #         html.H5(filename),
@@ -539,7 +530,6 @@ def update_output(text, size):
     )
 
 ######################################## processing the wordcloud ########################################
-
 @app.callback(Output('output-worcloud', 'children'),
               Input('data-file', 'data'),
               prevent_initial_call=True)
@@ -567,8 +557,7 @@ def set_worcloud(data):
             value=dict(hex='#000000'),
             size=200,
             persistence='local'
-        )],
-        style=DROPDOWN_STYLE
+        )]
     )
     ]
 
