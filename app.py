@@ -350,7 +350,18 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите ось Y"),
         dcc.Dropdown(id='yaxis-data_2',
-                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+                     options=[{'label':x, 'value':x} for x in df.columns], multi=True, persistence='local'),
+        html.P("Агрегация"),
+        dcc.Dropdown(id='agg-data_2',
+                     options={
+                         'sum': 'Сумма',
+                         'avg': 'Среднее',
+                         'count': 'Количество',
+                         'min': 'Минимум',
+                         'max': 'Максимум',
+                         },
+                     value='sum',
+                     persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="linechart-name", type="text", placeholder="Название", persistence='local'),
         ]
@@ -361,13 +372,17 @@ def draw_axis(data):
               [Input('data-file','data'),
               Input('xaxis-data_2','value'),
               Input('yaxis-data_2', 'value'),
+              Input('agg-data_2', 'value'),
               Input('linechart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, linechart_name):
+def make_graphs(data, x_data, y_data, agg_data, linechart_name):
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
-        line_fig = px.line(df, x=x_data, y=y_data)
+        nnn = df.groupby(x_data)[y_data]
+        r = {'nnn':nnn}
+        exec('nnn = nnn.'+d[agg_data], r)
+        line_fig = px.line(r['nnn'], x=r['nnn'].index, y=y_data)
         line_fig.update_layout(
             title={
                 'text': linechart_name,
@@ -442,12 +457,23 @@ def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     return [html.Div([
-        html.P("Выберите секторы"),
-        dcc.Dropdown(id='xaxis-data_4',
-                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите метки"),
         dcc.Dropdown(id='yaxis-data_4',
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.P("Выберите секторы"),
+        dcc.Dropdown(id='xaxis-data_4',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+        html.P("Агрегация"),
+        dcc.Dropdown(id='agg-data_3',
+                     options={
+                         'sum': 'Сумма',
+                         'avg': 'Среднее',
+                         'count': 'Количество',
+                         'min': 'Минимум',
+                         'max': 'Максимум',
+                         },
+                     value='sum',
+                     persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="piechart-name", type="text", placeholder="Название", persistence='local'),
         ]
@@ -458,10 +484,11 @@ def draw_axis(data):
               [Input('data-file','data'),
               Input('xaxis-data_4','value'),
               Input('yaxis-data_4', 'value'),
+              Input('agg-data_3', 'value'),
               Input('piechart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, piechart_name):
+def make_graphs(data, x_data, y_data, agg_data, piechart_name):
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
         
@@ -470,11 +497,24 @@ def make_graphs(data, x_data, y_data, piechart_name):
         if df_temp.shape[0] > 9:
              df_temp = df_temp.sort_values(x_data, ascending = False).reset_index()
              df_temp.loc[7:, y_data] = 'Другое'
-             df_temp = df_temp.groupby(y_data).sum()
+             
+             df_temp = df_temp.groupby(y_data)
+             r = {'df_temp':df_temp}
+             exec('df_temp = df_temp.'+d[agg_data], r)
 
-        # bar_fig = px.pie(df, values=x_data, names=y_data)
-        bar_fig = px.pie(df_temp, values=x_data, names=df_temp.index)
-        bar_fig.update_layout(
+            #  df_temp = df_temp.groupby(y_data).sum()
+
+            #  nnn = df_temp.groupby(x_data)[y_data]
+            #  r = {'nnn':nnn}
+            #  exec('nnn = nnn.'+d[agg_data], r)
+
+        print(r['df_temp'])
+
+        # pie_fig = px.pie(df, values=x_data, names=y_data)
+        # pie_fig = px.pie(df_temp, values=x_data, names=df_temp.index)
+        # pie_fig = px.pie(r['nnn'], values=r['nnn'].index, names=y_data)
+        pie_fig = px.pie(r['df_temp'], values=x_data, names=r['df_temp'].index)
+        pie_fig.update_layout(
             title={
                 'text': piechart_name,
                 'y':0.94,
@@ -484,13 +524,13 @@ def make_graphs(data, x_data, y_data, piechart_name):
             }
         )
 
-        bar_fig.update_traces(
+        pie_fig.update_traces(
              textposition="inside", 
              textinfo='percent+label'
 
         )
 
-        return dcc.Graph(figure=bar_fig), dcc.Graph(figure=bar_fig)
+        return dcc.Graph(figure=pie_fig), dcc.Graph(figure=pie_fig)
 
 ######################################## processing the image ########################################
 # def img_parse_contents(contents, filename, date):
@@ -606,4 +646,4 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
 
 # running the server
 if __name__ == '__main__':
-    app.run_server(debug=False, use_reloader=True)
+    app.run_server(debug=True, use_reloader=True)
