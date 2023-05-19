@@ -12,9 +12,9 @@ import dash_draggable
 import dash_bootstrap_components as dbc
 from dash_holoniq_wordcloud import DashWordcloud
 
-ZOOM = {
-    'zoom': '80%'
-}
+# ZOOM = {
+#     'zoom': '80%'
+# }
 
 app = dash.Dash(__name__, 
                 # external_stylesheets=external_stylesheets,
@@ -23,7 +23,7 @@ app = dash.Dash(__name__,
 
 app.layout = html.Div([
          
-    html.H1("Junior-viz", style={'textAlign': 'center', 'margin-top': 7, 'margin-bottom': 7}),
+    html.H1("НТО.Визуализация", style={'textAlign': 'center', 'margin-top': 7, 'margin-bottom': 7}),
 
     dcc.Tabs([
         
@@ -199,7 +199,7 @@ app.layout = html.Div([
             ])
         ])
     ]),
-], style=ZOOM)
+])
 
 ######################################## processing the data ########################################
 def parse_contents(contents, filename):
@@ -267,7 +267,7 @@ def get_table(data):
             selected_rows=[],
             page_action="native",
             page_current= 0,
-            page_size=10
+            page_size=15
         )
 
     ]
@@ -295,7 +295,9 @@ def draw_axis(data):
                          'count': 'Количество',
                          'min': 'Минимум',
                          'max': 'Максимум',
-                         }, persistence='local'), 
+                         },
+                     value='sum',
+                     persistence='local'), 
         html.P("Введите название графика"),
         dcc.Input(id="barchart-name", type="text", placeholder="Название", persistence='local'),
         # html.Hr()
@@ -321,7 +323,7 @@ def make_graphs(data, x_data, y_data, agg_data, barchart_name):
         nnn = df.groupby(x_data)[y_data]
         r = {'nnn':nnn}
         exec('nnn = nnn.'+d[agg_data], r)
-        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data)
+        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data, color=r['nnn'].index)
         bar_fig.update_layout(
             title={
                 'text': barchart_name,
@@ -604,4 +606,4 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
 
 # running the server
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=True)
+    app.run_server(debug=False, use_reloader=True)
