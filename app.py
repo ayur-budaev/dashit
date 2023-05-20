@@ -16,6 +16,15 @@ from dash_holoniq_wordcloud import DashWordcloud
 #     'zoom': '80%'
 # }
 
+INPUT_STYLE = {
+     'width': '100%'
+}
+
+P_STYLE = {
+     'margin-top': 10,
+     'margin-bottom': 5
+}
+
 app = dash.Dash(__name__, 
                 # external_stylesheets=external_stylesheets,
                 external_stylesheets=[dbc.themes.LUMEN],
@@ -281,13 +290,13 @@ def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     return [html.Div([
-        html.P("Выберите ось X"),
+        html.P("Выберите ось X", style = P_STYLE),
         dcc.Dropdown(id='xaxis-data_1',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-        html.P("Выберите ось Y"),
+        html.P("Выберите ось Y", style = P_STYLE),
         dcc.Dropdown(id='yaxis-data_1',
                      options=[{'label':x, 'value':x} for x in df.columns], multi=True, persistence='local'), 
-        html.P("Агрегация"),
+        html.P("Агрегация", style = P_STYLE),
         dcc.Dropdown(id='agg-data_1',
                      options={
                          'sum': 'Сумма',
@@ -298,8 +307,8 @@ def draw_axis(data):
                          },
                      value='sum',
                      persistence='local'), 
-        html.P("Введите название графика"),
-        dcc.Input(id="barchart-name", type="text", placeholder="Название", persistence='local'),
+        html.P("Введите название графика", style = P_STYLE),
+        dcc.Input(id="barchart-name", type="text", placeholder="Название", style = INPUT_STYLE, persistence='local'),
         # html.Hr()
         ]
     )]
@@ -345,13 +354,13 @@ def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     return [html.Div([
-        html.P("Выберите ось X"),
+        html.P("Выберите ось X", style = P_STYLE),
         dcc.Dropdown(id='xaxis-data_2',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-        html.P("Выберите ось Y"),
+        html.P("Выберите ось Y", style = P_STYLE),
         dcc.Dropdown(id='yaxis-data_2',
                      options=[{'label':x, 'value':x} for x in df.columns], multi=True, persistence='local'),
-        html.P("Агрегация"),
+        html.P("Агрегация", style = P_STYLE),
         dcc.Dropdown(id='agg-data_2',
                      options={
                          'sum': 'Сумма',
@@ -362,8 +371,8 @@ def draw_axis(data):
                          },
                      value='sum',
                      persistence='local'), 
-        html.P("Введите название графика"),
-        dcc.Input(id="linechart-name", type="text", placeholder="Название", persistence='local'),
+        html.P("Введите название графика", style = P_STYLE),
+        dcc.Input(id="linechart-name", type="text", placeholder="Название", style = INPUT_STYLE, persistence='local'),
         ]
     )]
 
@@ -403,20 +412,20 @@ def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     return [html.Div([
-        html.P("Выберите ось X"),
+        html.P("Выберите ось X", style = P_STYLE),
         dcc.Dropdown(id='xaxis-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-        html.P("Выберите ось Y"),
+        html.P("Выберите ось Y", style = P_STYLE),
         dcc.Dropdown(id='yaxis-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
-        html.P("Выберите размер"),
+        html.P("Выберите размер", style = P_STYLE),
         dcc.Dropdown(id='size-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
-        html.P("Выберите цвет"),
+        html.P("Выберите цвет", style = P_STYLE),
         dcc.Dropdown(id='color-data_3',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
-        html.P("Введите название графика"),
-        dcc.Input(id="dotchart-name", type="text", placeholder="Название", persistence='local'),
+        html.P("Введите название графика", style = P_STYLE),
+        dcc.Input(id="dotchart-name", type="text", placeholder="Название", style = INPUT_STYLE, persistence='local'),
         ]
     )]
 
@@ -457,13 +466,13 @@ def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     return [html.Div([
-        html.P("Выберите метки"),
+        html.P("Выберите метки", style = P_STYLE),
         dcc.Dropdown(id='yaxis-data_4',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-        html.P("Выберите секторы"),
+        html.P("Выберите секторы", style = P_STYLE),
         dcc.Dropdown(id='xaxis-data_4',
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
-        html.P("Агрегация"),
+        html.P("Агрегация", style = P_STYLE),
         dcc.Dropdown(id='agg-data_3',
                      options={
                          'sum': 'Сумма',
@@ -474,8 +483,8 @@ def draw_axis(data):
                          },
                      value='sum',
                      persistence='local'), 
-        html.P("Введите название графика"),
-        dcc.Input(id="piechart-name", type="text", placeholder="Название", persistence='local'),
+        html.P("Введите название графика", style = P_STYLE),
+        dcc.Input(id="piechart-name", type="text", placeholder="Название", style = INPUT_STYLE, persistence='local'),
         ]
     )]
 
@@ -567,7 +576,7 @@ def make_graphs(data, x_data, y_data, agg_data, piechart_name):
 def update_output(text, size):
     return html.P(format(text), 
         style = {
-            'font-size': size
+            'font-size': size,
         }
     )
 
@@ -580,20 +589,20 @@ def set_worcloud(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
     return [html.Div([
-        html.P("Выберите данные"),
+        html.P("Выберите данные", style = P_STYLE),
         dcc.Dropdown(id='worcloud_column',
                     options=df.columns[np.array([df[i].dtype == 'object' for i in df.columns])].tolist(),
                     persistence='local'),
-        html.P("Ширина"),
+        html.P("Ширина", style = P_STYLE),
         dcc.Slider(min=200, max=1000, step=50, value=500, id='width-slider', marks=None,
                     tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-        html.P("Высота"),
+        html.P("Высота", style = P_STYLE),
         dcc.Slider(min=200, max=1000, step=50, value=500, id='height-slider', marks=None,
                     tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-        html.P("Сетка"),
+        html.P("Сетка", style = P_STYLE),
         dcc.Slider(min=5, max=100, step=5, value=30, id='grid-slider', marks=None,
                     tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-        html.P("Выберите цвет"),
+        html.P("Выберите цвет", style = P_STYLE),
         daq.ColorPicker(
             id='words-color',
             value=dict(hex='#000000'),
