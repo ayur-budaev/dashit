@@ -258,7 +258,8 @@ def get_table(data):
     return [html.H3(dataset['filename'], 
                     style = {'text-align': 'center',
                              'margin-top': 15
-                             }),
+                    }
+                    ),
 
         dash_table.DataTable(
             id = 'df-table',
@@ -332,7 +333,8 @@ def make_graphs(data, x_data, y_data, agg_data, barchart_name):
         nnn = df.groupby(x_data)[y_data]
         r = {'nnn':nnn}
         exec('nnn = nnn.'+d[agg_data], r)
-        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data, color=r['nnn'].index)
+        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data, 
+                         color_discrete_sequence=px.colors.qualitative.Plotly, color=r['nnn'].index)
         bar_fig.update_layout(
             title={
                 'text': barchart_name,
@@ -391,7 +393,7 @@ def make_graphs(data, x_data, y_data, agg_data, linechart_name):
         nnn = df.groupby(x_data)[y_data]
         r = {'nnn':nnn}
         exec('nnn = nnn.'+d[agg_data], r)
-        line_fig = px.line(r['nnn'], x=r['nnn'].index, y=y_data)
+        line_fig = px.line(r['nnn'], x=r['nnn'].index, y=y_data, color_discrete_sequence=px.colors.qualitative.Plotly)
         line_fig.update_layout(
             title={
                 'text': linechart_name,
@@ -445,7 +447,8 @@ def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
         for i in [x_data, y_data, size_data, color_data]:
             if not pd.isna(i):
                 df = df.loc[~df[i].isna()]
-        dot_fig = px.scatter(df, x=x_data, y=y_data, size=size_data, color=color_data)
+        dot_fig = px.scatter(df, x=x_data, y=y_data, size=size_data,
+                             color_discrete_sequence=px.colors.qualitative.Plotly, color=color_data)
         dot_fig.update_layout(
             title={
                 'text': dotchart_name,
@@ -471,7 +474,10 @@ def draw_axis(data):
                      options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
         html.P("Выберите секторы", style = P_STYLE),
         dcc.Dropdown(id='xaxis-data_4',
-                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'), 
+                     options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+        html.P("Количество уникальных секторов", style = P_STYLE),
+        dcc.Slider(min=1, max=20, step=1, value=7, id='sectors-slider', marks=None,
+                    tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
         html.P("Агрегация", style = P_STYLE),
         dcc.Dropdown(id='agg-data_3',
                      options={
@@ -493,11 +499,12 @@ def draw_axis(data):
               [Input('data-file','data'),
               Input('xaxis-data_4','value'),
               Input('yaxis-data_4', 'value'),
+              Input('sectors-slider', 'value'),
               Input('agg-data_3', 'value'),
               Input('piechart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, agg_data, piechart_name):
+def make_graphs(data, x_data, y_data, sliderSectors, agg_data, piechart_name):
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
         
@@ -505,7 +512,7 @@ def make_graphs(data, x_data, y_data, agg_data, piechart_name):
         
         if df_temp.shape[0] > 9:
              df_temp = df_temp.sort_values(x_data, ascending = False).reset_index()
-             df_temp.loc[7:, y_data] = 'Другое'
+             df_temp.loc[sliderSectors:, y_data] = 'Другое'
              
              df_temp = df_temp.groupby(y_data)
              r = {'df_temp':df_temp}
@@ -522,7 +529,7 @@ def make_graphs(data, x_data, y_data, agg_data, piechart_name):
         # pie_fig = px.pie(df, values=x_data, names=y_data)
         # pie_fig = px.pie(df_temp, values=x_data, names=df_temp.index)
         # pie_fig = px.pie(r['nnn'], values=r['nnn'].index, names=y_data)
-        pie_fig = px.pie(r['df_temp'], values=x_data, names=r['df_temp'].index)
+        pie_fig = px.pie(r['df_temp'], values=x_data, names=r['df_temp'].index, color_discrete_sequence=px.colors.qualitative.Plotly)
         pie_fig.update_layout(
             title={
                 'text': piechart_name,
