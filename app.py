@@ -261,24 +261,43 @@ def get_table(data):
                     }
                     ),
 
-        dash_table.DataTable(
-            id = 'df-table',
-            data=df.to_dict('records'),
-            columns=[{'name': i, 'id': i} for i in df.columns],
+            dash_table.DataTable(
+                id = 'df-table',
+                data=df.to_dict('records'),
+                columns=[{'name': i, 'id': i} for i in df.columns],
 
-            editable=True,
-            filter_action="native",
-            sort_action="native",
-            sort_mode="multi", 
-            column_selectable="single",
-            row_selectable="multi",
-            row_deletable=True,
-            selected_columns=[],
-            selected_rows=[],
-            page_action="native",
-            page_current= 0,
-            page_size=15
-        )
+                style_table={'overflowX': 'auto'},
+                
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi", 
+                column_selectable="single",
+                row_selectable="multi",
+                row_deletable=True,
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current= 0,
+                page_size=15
+            ),
+            
+            html.P("Сортировка", style = P_STYLE),
+            html.P("Выберите столбец", style = P_STYLE),
+            dcc.Dropdown(id='sort-column',
+                        options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+            html.P("Выберите тип сортировки", style = P_STYLE),
+            dcc.Dropdown(id='sort-type',
+                        options={
+                         'sum': 'По умолчанию',
+                         'avg': 'По возрастанию',
+                         'count': 'По убыванию',
+                         }, value='sum',
+                         persistence='local'),
+            html.P("Срез", style = P_STYLE),
+            dcc.RangeSlider(min=1, max=len(df.index), step=1, value=[1, len(df.index)], id='slice-slider', marks=None,
+                        tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+
 
     ]
 
@@ -637,8 +656,8 @@ def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsCol
 
     try:
         security_data = []
-        df_temp = df[column].value_counts()
-        for k, v in df_temp.items():
+        df = df[column].value_counts()
+        for k, v in df.items():
             security_data.append([k, v])            
     except:
         pass        
