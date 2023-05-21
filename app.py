@@ -55,6 +55,7 @@ app.layout = html.Div([
             ),
                     
             dcc.Store(id='data-file', storage_type='local'),
+            html.Div(id='sort-data'),
             html.Div(id='output-datatable'),
 
         ]),
@@ -210,6 +211,8 @@ app.layout = html.Div([
     ]),
 ])
 
+
+
 ######################################## processing the data ########################################
 def parse_contents(contents, filename):
     df_uploaded = pd.DataFrame()
@@ -248,12 +251,73 @@ def set_data(contents, filename):
         print(e)
         return json.dumps(json_data)
 
-@app.callback(Output('output-datatable', 'children'),
-              Input('data-file', 'data'), prevent_initial_call=True)
+######################################## processing sorting ########################################
+@app.callback(Output('sort-data', 'children'),
+              Input('data-file', 'data'), 
+              prevent_initial_call=True)
 
-def get_table(data):
+def get_sort(data):
     dataset = json.loads(data)
     df = pd.read_json(dataset['data'], orient='split')
+
+    return [html.P("Сортировка", style = P_STYLE),
+            html.P("Выберите столбец", style = P_STYLE),
+            dcc.Dropdown(id='sort-column',
+                        options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+            html.P("Выберите тип сортировки", style = P_STYLE),
+            dcc.Dropdown(id='sort-type',
+                        options={
+                         'default': 'По умолчанию',
+                         'asc': 'По возрастанию',
+                         'des': 'По убыванию',
+                         }, value='def',
+                         persistence='local'),
+            html.P("Срез", style = P_STYLE),
+            dcc.RangeSlider(id='slice-slider', min=1, max=len(df.index), step=1, value=[1, len(df.index)], marks=None,
+                        tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+
+
+    ]
+
+######################################## processing sorting ########################################
+# @app.callback(Output('data-file', 'data'),
+#               Input('data-file1', 'data'),
+#               Input('sort-column', 'value'),
+#               Input('sort-type', 'data'),
+#               Input('slice-slider', 'data'),
+#               prevent_initial_call=True)
+
+# def get_sort(data, sortColumn, sortType, sliceSlider):
+#     dataset = json.loads(data)
+#     df = pd.read_json(dataset['data'], orient='split')
+
+#     if sortType == 'default':
+#         df = df
+#     elif sortType == 'asc':
+#         df = df.sort_values(by=sortColumn, ascending=True)
+#     elif sortType == 'des':
+#         df = df.sort_values(by=sortColumn, ascending=False)
+
+#     return df
+
+######################################## processing the table ########################################
+@app.callback(Output('output-datatable', 'children'),
+              Input('data-file', 'data'),
+              Input('sort-column', 'value'),
+              Input('sort-type', 'value'),
+            #   Input('slice-slider', 'value'),
+              prevent_initial_call=True)
+
+def get_table(data, sortColumn, sortType):
+    dataset = json.loads(data)
+    df = pd.read_json(dataset['data'], orient='split')
+
+    if sortType == 'default':
+        df = df
+    elif sortType == 'asc':
+        df = df.sort_values(by=sortColumn, ascending=True)
+    elif sortType == 'des':
+        df = df.sort_values(by=sortColumn, ascending=False)
 
     return [html.H3(dataset['filename'], 
                     style = {'text-align': 'center',
@@ -281,23 +345,6 @@ def get_table(data):
                 page_current= 0,
                 page_size=15
             ),
-            
-            html.P("Сортировка", style = P_STYLE),
-            html.P("Выберите столбец", style = P_STYLE),
-            dcc.Dropdown(id='sort-column',
-                        options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-            html.P("Выберите тип сортировки", style = P_STYLE),
-            dcc.Dropdown(id='sort-type',
-                        options={
-                         'sum': 'По умолчанию',
-                         'avg': 'По возрастанию',
-                         'count': 'По убыванию',
-                         }, value='sum',
-                         persistence='local'),
-            html.P("Срез", style = P_STYLE),
-            dcc.RangeSlider(min=1, max=len(df.index), step=1, value=[1, len(df.index)], id='slice-slider', marks=None,
-                        tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
-
 
     ]
 
