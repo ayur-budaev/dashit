@@ -148,29 +148,7 @@ app.layout = html.Div([
                         ]), 
                     ], fluid=True)
                 ]),
-
-                        # dcc.Tab(label='Изображение', children = [
-                        #     html.Div(dcc.Upload(
-                        #     id='upload-image',
-                        #     children=html.Div([
-                        #         'Drag and Drop or ',
-                        #         html.A('Select Files')
-                        #     ]),
-                        #     style={
-                        #         'width': '100%',
-                        #         'height': '60px',
-                        #         'lineHeight': '60px',
-                        #         'borderWidth': '1px',
-                        #         'borderStyle': 'dashed',
-                        #         'borderRadius': '5px',
-                        #         'textAlign': 'center',
-                        #         'margin': '10px'
-                        #     },
-                        #     # Allow multiple files to be uploaded
-                        #     multiple=True
-                        #     ), style=TABS_STYLE),
-                        # ]),
-                        
+            
                 dcc.Tab(label='Текст', children = [
                     dbc.Container([
                                 
@@ -204,7 +182,6 @@ app.layout = html.Div([
                 html.Div(id='dotchart-div'),
                 html.Div(id='piechart-div'),
                 html.Div(id='wordcloud-div'),
-                # html.Div(id='output-image-upload'),
                 html.Div(id='textarea-example-output', style={'whiteSpace': 'pre-line'}),
             ])
         ])
@@ -260,22 +237,39 @@ def get_sort(data):
     dataset = json.loads(data)
     df = pd.read_json(dataset['data'], orient='split')
 
-    return [html.P("Сортировка", style = P_STYLE),
-            html.P("Выберите столбец", style = P_STYLE),
-            dcc.Dropdown(id='sort-column',
-                        options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
-            html.P("Выберите тип сортировки", style = P_STYLE),
-            dcc.Dropdown(id='sort-type',
-                        options={
-                         'default': 'По умолчанию',
-                         'asc': 'По возрастанию',
-                         'des': 'По убыванию',
-                         }, value='def',
-                         persistence='local'),
-            html.P("Срез", style = P_STYLE),
-            dcc.RangeSlider(id='slice-slider', min=1, max=len(df.index), step=1, value=[1, len(df.index)], marks=None,
-                        tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+    return [html.H3('Сортировка', 
+                    style = {'text-align': 'center',
+                             'margin-top': 15
+                    }
+                    ),
+            dbc.Container([
+                dbc.Row([
+                    dbc.Col([
 
+                        html.P("Выберите столбец", style = P_STYLE),
+                        dcc.Dropdown(id='sort-column',
+                                    options=[{'label':x, 'value':x} for x in df.columns], persistence='local'),
+
+                    ], width={'size':3}),
+                    dbc.Col([
+                        html.P("Выберите тип сортировки", style = P_STYLE),
+                        dcc.Dropdown(id='sort-type',
+                                    options={
+                                    'default': 'По умолчанию',
+                                    'asc': 'По возрастанию',
+                                    'des': 'По убыванию',
+                                    }, value='def',
+                                    persistence='local'),
+                    ], width={'size':3}),
+                    
+                    dbc.Col([
+                        html.P("Срез", style = P_STYLE),
+                        dcc.RangeSlider(id='slice-slider', min=1, max=len(df.index), step=1, value=[1, len(df.index)], marks=None,
+                                    tooltip={"placement": "bottom", "always_visible": True}, persistence='local'),
+                    ], width={'size':6}),
+                ]),
+                
+            ], fluid=True)
 
     ]
 
@@ -305,12 +299,14 @@ def get_sort(data):
               Input('data-file', 'data'),
               Input('sort-column', 'value'),
               Input('sort-type', 'value'),
-            #   Input('slice-slider', 'value'),
+              Input('slice-slider', 'value'),
               prevent_initial_call=True)
 
-def get_table(data, sortColumn, sortType):
+def get_table(data, sortColumn, sortType, sortSlider):
     dataset = json.loads(data)
     df = pd.read_json(dataset['data'], orient='split')
+
+    
 
     if sortType == 'default':
         df = df
@@ -318,6 +314,8 @@ def get_table(data, sortColumn, sortType):
         df = df.sort_values(by=sortColumn, ascending=True)
     elif sortType == 'des':
         df = df.sort_values(by=sortColumn, ascending=False)
+
+    df = df.iloc[sortSlider[0]-1:sortSlider[1]+1]
 
     return [html.H3(dataset['filename'], 
                     style = {'text-align': 'center',
@@ -353,9 +351,12 @@ def get_table(data, sortColumn, sortType):
 @app.callback(Output('output-axis_1', 'children'),
               Input('data-file', 'data'),
               prevent_initial_call=True)
+
+
 def draw_axis(data):
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
+    
     return [html.Div([
         html.P("Выберите ось X", style = P_STYLE),
         dcc.Dropdown(id='xaxis-data_1',
@@ -380,26 +381,43 @@ def draw_axis(data):
         ]
     )]
 
-### dictionary for an aggregation ###
-d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
-
 @app.callback([
               Output('barchart-div-dupl', 'children'),
               Output('barchart-div', 'children')],
               [Input('data-file','data'),
+              Input('sort-column', 'value'),
+              Input('sort-type', 'value'),
+              Input('slice-slider', 'value'),
               Input('xaxis-data_1','value'),
               Input('yaxis-data_1', 'value'),
               Input('agg-data_1', 'value'),
               Input('barchart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, agg_data, barchart_name):
+def make_graphs(data, sortColumn, sortType, sortSlider, x_data, y_data, agg_data, barchart_name):
+
+        ### dictionary for an aggregation ###
+        d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
+
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
+
+        if sortType == 'default':
+            df = df
+        elif sortType == 'asc':
+            df = df.sort_values(by=sortColumn, ascending=True)
+        elif sortType == 'des':
+            df = df.sort_values(by=sortColumn, ascending=False)
+
+        df = df.iloc[sortSlider[0]-1:sortSlider[1]+1]
+
         nnn = df.groupby(x_data)[y_data]
         r = {'nnn':nnn}
         exec('nnn = nnn.'+d[agg_data], r)
-        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data, 
+
+        # r['nnn'].sort_values(by=sortColumn, ascending=False)
+
+        bar_fig = px.bar(r['nnn'], x=r['nnn'].index, y=y_data,
                          color_discrete_sequence=px.colors.qualitative.Plotly, color=r['nnn'].index)
         bar_fig.update_layout(
             title={
@@ -447,18 +465,36 @@ def draw_axis(data):
 @app.callback([Output('linechart-div-dupl', 'children'),
                Output('linechart-div', 'children')],
               [Input('data-file','data'),
+              Input('sort-column', 'value'),
+              Input('sort-type', 'value'),
+              Input('slice-slider', 'value'),
               Input('xaxis-data_2','value'),
               Input('yaxis-data_2', 'value'),
               Input('agg-data_2', 'value'),
               Input('linechart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, agg_data, linechart_name):
+def make_graphs(data, sortColumn, sortType, sortSlider, x_data, y_data, agg_data, linechart_name):
+        
+        ### dictionary for an aggregation ###
+        d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
+        
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
+
+        if sortType == 'default':
+            df = df
+        elif sortType == 'asc':
+            df = df.sort_values(by=sortColumn, ascending=True)
+        elif sortType == 'des':
+            df = df.sort_values(by=sortColumn, ascending=False)
+
+        df = df.iloc[sortSlider[0]-1:sortSlider[1]+1]
+
         nnn = df.groupby(x_data)[y_data]
         r = {'nnn':nnn}
         exec('nnn = nnn.'+d[agg_data], r)
+
         line_fig = px.line(r['nnn'], x=r['nnn'].index, y=y_data, color_discrete_sequence=px.colors.qualitative.Plotly)
         line_fig.update_layout(
             title={
@@ -500,6 +536,9 @@ def draw_axis(data):
 @app.callback([Output('dotchart-div-dupl', 'children'),
                Output('dotchart-div', 'children')],
               [Input('data-file','data'),
+              Input('sort-column', 'value'),
+              Input('sort-type', 'value'),
+              Input('slice-slider', 'value'),
               Input('xaxis-data_3','value'),
               Input('yaxis-data_3', 'value'),
               Input('size-data_3', 'value'),
@@ -507,9 +546,19 @@ def draw_axis(data):
               Input('dotchart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, size_data, color_data, dotchart_name):
+def make_graphs(data, sortColumn, sortType, sortSlider, x_data, y_data, size_data, color_data, dotchart_name):
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
+
+        if sortType == 'default':
+            df = df
+        elif sortType == 'asc':
+            df = df.sort_values(by=sortColumn, ascending=True)
+        elif sortType == 'des':
+            df = df.sort_values(by=sortColumn, ascending=False)
+
+        df = df.iloc[sortSlider[0]-1:sortSlider[1]+1]
+
         for i in [x_data, y_data, size_data, color_data]:
             if not pd.isna(i):
                 df = df.loc[~df[i].isna()]
@@ -563,6 +612,9 @@ def draw_axis(data):
 @app.callback([Output('piechart-div-dupl', 'children'),
                Output('piechart-div', 'children')],
               [Input('data-file','data'),
+              Input('sort-column', 'value'),
+              Input('sort-type', 'value'),
+              Input('slice-slider', 'value'),
               Input('xaxis-data_4','value'),
               Input('yaxis-data_4', 'value'),
               Input('sectors-slider', 'value'),
@@ -570,10 +622,23 @@ def draw_axis(data):
               Input('piechart-name','value')],
               prevent_initial_call=False)
 
-def make_graphs(data, x_data, y_data, sliderSectors, agg_data, piechart_name):
+def make_graphs(data, sortColumn, sortType, sortSlider, x_data, y_data, sliderSectors, agg_data, piechart_name):
+        
+        ### dictionary for an aggregation ###
+        d = {'sum': 'sum()', 'avg':'mean()', 'count': 'count()', 'min':'min()', 'max':'max()'}
+        
         dataset = json.loads(data)['data']
         df = pd.read_json(dataset, orient='split')
-        
+
+        # if sortType == 'default':
+        #     df = df
+        # elif sortType == 'asc':
+        #     df = df.sort_values(by=sortColumn, ascending=True)
+        # elif sortType == 'des':
+        #     df = df.sort_values(by=sortColumn, ascending=False)
+
+        # df = df.iloc[sortSlider[0]-1:sortSlider[1]+1]
+
         df_temp = df.groupby(y_data).count()
         
         if df_temp.shape[0] > 9:
@@ -590,7 +655,7 @@ def make_graphs(data, x_data, y_data, sliderSectors, agg_data, piechart_name):
             #  r = {'nnn':nnn}
             #  exec('nnn = nnn.'+d[agg_data], r)
 
-        print(r['df_temp'])
+        # print(r['df_temp'])
 
         # pie_fig = px.pie(df, values=x_data, names=y_data)
         # pie_fig = px.pie(df_temp, values=x_data, names=df_temp.index)
@@ -613,31 +678,6 @@ def make_graphs(data, x_data, y_data, sliderSectors, agg_data, piechart_name):
         )
 
         return dcc.Graph(figure=pie_fig), dcc.Graph(figure=pie_fig)
-
-######################################## processing the image ########################################
-# def img_parse_contents(contents, filename, date):
-#     return html.Div([
-#         html.H5(filename),
-#         html.Img(src=contents),
-#         # html.Div(html.Img(src=contents), style = {'width': 222, 'height': 400,'background-image': 'url("html.Img(src=contents)")'})
-#         # HTML images accept base64 encoded strings in the same format
-#         # that is supplied by the upload
-#         # html.Div(style = {'width': 222, 'height': 400,'background-image': contents}),
-#         # html.Div(style = {'width': 222, 'height': 400,'background-image': 'url("data:image/png;base64, base64.b64encode(image).decode(\'utf-8\')")'})
-        
-#     ])
-
-
-# @app.callback(Output('output-image-upload', 'children'),
-#               Input('upload-image', 'contents'),
-#               State('upload-image', 'filename'),
-#               State('upload-image', 'last_modified'))
-# def update_output(list_of_contents, list_of_names, list_of_dates):
-#     if list_of_contents is not None:
-#         children = [
-#             img_parse_contents(c, n, d) for c, n, d in
-#             zip(list_of_contents, list_of_names, list_of_dates)]
-#         return children
 
 ######################################## processing the text ########################################
 @app.callback(
@@ -688,6 +728,9 @@ def set_worcloud(data):
 @app.callback([Output('wordcloud-div-dupl', 'children'),
                Output('wordcloud-div', 'children')],
               [Input('data-file', 'data'),
+              Input('sort-column', 'value'),
+              Input('sort-type', 'value'),
+              Input('slice-slider', 'value'),
               Input('worcloud_column', 'value'),
               Input('width-slider', 'value'),
               Input('height-slider', 'value'),
@@ -695,11 +738,21 @@ def set_worcloud(data):
               Input('words-color', 'value')],
               prevent_initial_call=True)
 
-def draw_wordcloud(data, column, sliderWidth, sliderHeight, sliderGrid, wordsColor):
+def draw_wordcloud(data, sortColumn, sortType, sortSlider, column, sliderWidth, sliderHeight, sliderGrid, wordsColor):
     security_data = []
 
     dataset = json.loads(data)['data']
     df = pd.read_json(dataset, orient='split')
+
+    # if sortType == 'default':
+    #     df = df
+    # elif sortType == 'asc':
+    #     df = df.sort_values(by=sortColumn, ascending=True)
+    # elif sortType == 'des':
+    #     df = df.sort_values(by=sortColumn, ascending=False)
+
+    # df = df.iloc[sortSlider[0]-1:sortSlider[1]+1]
+
 
     try:
         security_data = []
